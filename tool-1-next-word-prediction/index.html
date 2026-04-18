@@ -1,0 +1,1255 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<!--
+ATTRIBUTION:
+
+"Next-Word Prediction" by Victor Osondu
+https://codepen.io/VictorOsondu/pen/019d9ab6-517a-77e8-9436-0800c8d84ea5
+
+Licensed under CC BY 4.0
+https://creativecommons.org/licenses/by/4.0/
+
+To attribute this work, please include the above text and link.
+-->
+    <title>Next-Word Prediction Simulator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="license" href="https://creativecommons.org/licenses/by/4.0/" />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      :root {
+        --bg: #1a1a2e;
+        --bg-nav: #16213e;
+        --surface: rgba(255, 255, 255, 0.05);
+        --border: rgba(255, 255, 255, 0.1);
+        --accent: #6366f1;
+        --accent-glow: rgba(99, 102, 241, 0.3);
+        --amber: #f0a500;
+        --text: #e8e8e8;
+        --heading: #ffffff;
+        --muted: #888888;
+        --radius: 16px;
+        --font: "Inter", system-ui, sans-serif;
+        --mono: "JetBrains Mono", "Fira Code", monospace;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          transition-duration: 0.01ms !important;
+          animation-duration: 0.01ms !important;
+        }
+      }
+
+      html {
+        font-size: 16px;
+      }
+
+      body {
+        font-family: var(--font);
+        background: radial-gradient(
+          ellipse at 50% 30%,
+          var(--bg-nav),
+          var(--bg) 70%
+        );
+        color: var(--text);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        padding: 32px 16px;
+        line-height: 1.6;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 720px;
+      }
+
+      /* Header */
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 4px;
+      }
+      .header h1 {
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: var(--heading);
+      }
+      .header .brand {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: var(--muted);
+        letter-spacing: 0.5px;
+      }
+      .header-line {
+        height: 2px;
+        background: linear-gradient(90deg, var(--accent), transparent);
+        margin-bottom: 28px;
+        border-radius: 1px;
+      }
+
+      /* Card surfaces */
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 20px 24px;
+        margin-bottom: 20px;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+      }
+
+      /* Explainer panel */
+      .explainer {
+        position: relative;
+        cursor: pointer;
+      }
+      .explainer-toggle {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 8px;
+        user-select: none;
+      }
+      .explainer-toggle .chevron {
+        transition: transform 0.2s ease-out;
+        font-size: 0.7rem;
+      }
+      .explainer.collapsed .chevron {
+        transform: rotate(-90deg);
+      }
+      .explainer.collapsed .explainer-text {
+        display: none;
+      }
+      .explainer-text {
+        font-size: 0.95rem;
+        color: var(--text);
+        line-height: 1.65;
+      }
+
+      .license-info {
+        font-size: 0.8rem;
+        padding: 20px;
+        text-align: center;
+        color: #666;
+      }
+      /* Sentence area */
+      .sentence-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 8px;
+      }
+      .sentence-display {
+        font-family: var(--mono);
+        font-size: 1.15rem;
+        color: var(--heading);
+        min-height: 48px;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 4px;
+      }
+      .sentence-word {
+        display: inline-block;
+        transition: color 0.6s ease-out;
+      }
+      .sentence-word.new {
+        color: var(--accent);
+      }
+      .cursor-blink {
+        display: inline-block;
+        width: 2px;
+        height: 1.2em;
+        background: var(--accent);
+        margin-left: 2px;
+        animation: blink 1s step-end infinite;
+        vertical-align: text-bottom;
+      }
+      @keyframes blink {
+        50% {
+          opacity: 0;
+        }
+      }
+
+      /* Candidates prompt */
+      .candidates-prompt {
+        font-size: 0.9rem;
+        color: var(--muted);
+        margin-bottom: 14px;
+      }
+
+      /* Candidate list */
+      .candidates-card {
+        padding: 8px 0;
+      }
+      .candidate-row {
+        display: flex;
+        align-items: center;
+        padding: 10px 24px;
+        cursor: pointer;
+        border-radius: 10px;
+        transition: background 0.2s ease-out;
+        opacity: 0;
+        transform: translateY(10px);
+        position: relative;
+      }
+      .candidate-row.visible {
+        opacity: 1;
+        transform: translateY(0);
+        transition:
+          opacity 0.3s ease-out,
+          transform 0.3s ease-out,
+          background 0.2s ease-out;
+      }
+      .candidate-row:hover {
+        background: rgba(99, 102, 241, 0.08);
+      }
+      .candidate-row:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: -2px;
+      }
+      .candidate-word {
+        font-family: var(--mono);
+        font-size: 1rem;
+        font-weight: 500;
+        color: var(--heading);
+        min-width: 120px;
+        transition:
+          color 0.2s,
+          text-shadow 0.2s;
+      }
+      .candidate-row:hover .candidate-word {
+        color: var(--accent);
+        text-shadow: 0 0 8px var(--accent-glow);
+      }
+      .candidate-bar-track {
+        flex: 1;
+        height: 22px;
+        background: rgba(255, 255, 255, 0.04);
+        border-radius: 6px;
+        overflow: hidden;
+        margin: 0 14px;
+      }
+      .candidate-bar {
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          var(--accent),
+          rgba(99, 102, 241, 0.5)
+        );
+        border-radius: 6px;
+        width: 0;
+        transition:
+          width 0.4s ease-out,
+          background 0.2s;
+      }
+      .candidate-row:hover .candidate-bar {
+        background: linear-gradient(
+          90deg,
+          var(--accent),
+          rgba(99, 102, 241, 0.7)
+        );
+      }
+      .candidate-prob {
+        font-family: var(--mono);
+        font-size: 0.85rem;
+        color: var(--muted);
+        min-width: 48px;
+        text-align: right;
+      }
+      .candidate-arrow {
+        margin-left: 8px;
+        color: var(--accent);
+        opacity: 0;
+        transition: opacity 0.2s;
+        font-size: 0.85rem;
+      }
+      .candidate-row:hover .candidate-arrow {
+        opacity: 1;
+      }
+
+      /* Insight callout */
+      .insight {
+        border-left: 3px solid var(--accent);
+        border-radius: 0 12px 12px 0;
+        padding: 14px 20px;
+        background: rgba(99, 102, 241, 0.05);
+        font-size: 0.9rem;
+        line-height: 1.6;
+        color: var(--text);
+        opacity: 0;
+        transform: translateY(12px);
+        transition:
+          opacity 0.4s ease-out,
+          transform 0.4s ease-out;
+        margin-bottom: 4px;
+      }
+      .insight.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .insight-icon {
+        margin-right: 6px;
+      }
+
+      /* Bottom controls */
+      .controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 6px;
+      }
+      .dropdown-wrap {
+        position: relative;
+      }
+
+      .dropdown-btn {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        color: var(--text);
+        font-family: var(--font);
+        font-size: 0.85rem;
+        padding: 8px 16px;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: border-color 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .dropdown-btn:hover {
+        border-color: var(--accent);
+      }
+
+      .dropdown-menu {
+        position: absolute;
+        bottom: calc(100% + 6px);
+        left: 0;
+        background: #1e1e36;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 6px;
+        min-width: 320px;
+        display: none;
+        z-index: 10;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      }
+      .dropdown-menu.open {
+        display: block;
+      }
+      .dropdown-item {
+        padding: 10px 14px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        color: var(--text);
+        transition: background 0.15s;
+        font-family: var(--mono);
+      }
+      .dropdown-item:hover {
+        background: rgba(99, 102, 241, 0.1);
+      }
+      .dropdown-item.active {
+        color: var(--accent);
+      }
+
+      .reset-btn {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--muted);
+        font-family: var(--font);
+        font-size: 0.85rem;
+        padding: 8px 16px;
+        border-radius: 10px;
+        cursor: pointer;
+        transition:
+          border-color 0.2s,
+          color 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .reset-btn:hover {
+        border-color: var(--accent);
+        color: var(--text);
+      }
+
+      /* Footer */
+      .footer {
+        text-align: right;
+        font-size: 0.75rem;
+        color: var(--muted);
+        margin-top: 8px;
+      }
+      .footer a {
+        color: var(--muted);
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+      .footer a:hover {
+        color: var(--accent);
+      }
+
+      /* Responsive */
+      @media (max-width: 540px) {
+        body {
+          padding: 16px 8px;
+        }
+        .candidate-word {
+          min-width: 80px;
+          font-size: 0.9rem;
+        }
+        .sentence-display {
+          font-size: 1rem;
+        }
+        .header h1 {
+          font-size: 1.1rem;
+        }
+        .dropdown-menu {
+          min-width: 260px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <div class="header">
+        <h2>Next-Word Prediction</h2>
+      </div>
+      <div class="header-line"></div>
+
+      <!-- Explainer -->
+      <div
+        class="card explainer"
+        id="explainer"
+        tabindex="0"
+        role="button"
+        aria-expanded="true"
+        aria-label="Toggle explanation"
+      >
+        <div class="explainer-toggle">
+          <span>How this works</span>
+          <span class="chevron">&#9660;</span>
+        </div>
+        <div class="explainer-text">
+          AI doesn't look up answers. It predicts the most likely next word —
+          then the next, then the next. This is how every response is built.
+        </div>
+      </div>
+
+      <!-- Sentence area -->
+      <div class="card">
+        <div class="sentence-label">Sentence so far</div>
+        <div
+          class="sentence-display"
+          id="sentenceDisplay"
+          aria-live="polite"
+        ></div>
+      </div>
+
+      <!-- Candidates prompt -->
+      <div class="candidates-prompt">
+        What comes next? The model sees these options:
+      </div>
+
+      <!-- Candidate list -->
+      <div
+        class="card candidates-card"
+        id="candidatesCard"
+        role="list"
+        aria-label="Word candidates"
+      ></div>
+
+      <!-- Instruction -->
+      <p style="font-size: 0.85rem; color: var(--muted); margin-bottom: 20px">
+        Click any word to select it and continue building.
+      </p>
+
+      <!-- Insight -->
+      <div class="insight" id="insight" role="status" aria-live="polite">
+        <span class="insight-icon">&#128161;</span>
+        <span id="insightText"></span>
+      </div>
+
+      <!-- Controls -->
+      <div class="controls">
+        <div class="dropdown-wrap">
+          <button
+            class="dropdown-btn"
+            id="dropdownBtn"
+            aria-haspopup="true"
+            aria-expanded="false"
+          >
+            Try a new sentence
+            <span>&#9662;</span>
+          </button>
+          <div class="dropdown-menu" id="dropdownMenu" role="menu"></div>
+        </div>
+        <button class="reset-btn" id="resetBtn" aria-label="Reset sentence">
+          Reset &#8634;
+        </button>
+      </div>
+
+      <footer class="license-info">
+        This work is licensed under
+        <a
+          href="https://creativecommons.org/licenses/by/4.0/"
+          target="_blank"
+          rel="license noopener noreferrer"
+        >
+          CC BY 4.0
+        </a>
+        .
+      </footer>
+    </div>
+
+    <script>
+      // ============================================================
+      // DATA: Pre-computed prediction trees
+      // ============================================================
+      const DATA = [
+        {
+          id: "france",
+          label: "The capital of France is",
+          prefix: ["The", "capital", "of", "France", "is"],
+          candidates: [
+            {
+              word: "Paris",
+              probability: 0.89,
+              next: [
+                {
+                  word: ",",
+                  probability: 0.55,
+                  next: [
+                    {
+                      word: "which",
+                      probability: 0.62,
+                      next: [
+                        {
+                          word: "is",
+                          probability: 0.78,
+                          next: [
+                            {
+                              word: "known",
+                              probability: 0.65,
+                              next: [
+                                { word: "for", probability: 0.9, next: null }
+                              ]
+                            },
+                            {
+                              word: "home",
+                              probability: 0.18,
+                              next: [
+                                { word: "to", probability: 0.92, next: null }
+                              ]
+                            },
+                            { word: "one", probability: 0.1, next: null },
+                            { word: "famous", probability: 0.05, next: null },
+                            { word: "a", probability: 0.02, next: null }
+                          ]
+                        },
+                        { word: "has", probability: 0.12, next: null },
+                        { word: "attracts", probability: 0.06, next: null },
+                        { word: "was", probability: 0.03, next: null },
+                        { word: "remains", probability: 0.01, next: null }
+                      ]
+                    },
+                    {
+                      word: "a",
+                      probability: 0.2,
+                      next: [
+                        { word: "city", probability: 0.72, next: null },
+                        { word: "vibrant", probability: 0.14, next: null },
+                        { word: "beautiful", probability: 0.08, next: null },
+                        { word: "major", probability: 0.04, next: null },
+                        { word: "historic", probability: 0.02, next: null }
+                      ]
+                    },
+                    { word: "one", probability: 0.08, next: null },
+                    { word: "often", probability: 0.05, next: null },
+                    { word: "also", probability: 0.05, next: null }
+                  ]
+                },
+                { word: ".", probability: 0.3, next: null },
+                { word: "—", probability: 0.08, next: null },
+                { word: "and", probability: 0.05, next: null },
+                { word: "which", probability: 0.02, next: null }
+              ]
+            },
+            {
+              word: "a",
+              probability: 0.06,
+              next: [
+                {
+                  word: "beautiful",
+                  probability: 0.4,
+                  next: [
+                    { word: "city", probability: 0.75, next: null },
+                    { word: "and", probability: 0.12, next: null },
+                    { word: "place", probability: 0.08, next: null },
+                    { word: "European", probability: 0.03, next: null },
+                    { word: "historic", probability: 0.02, next: null }
+                  ]
+                },
+                { word: "city", probability: 0.3, next: null },
+                { word: "major", probability: 0.15, next: null },
+                { word: "well-known", probability: 0.1, next: null },
+                { word: "globally", probability: 0.05, next: null }
+              ]
+            },
+            {
+              word: "known",
+              probability: 0.03,
+              next: [
+                { word: "worldwide", probability: 0.45, next: null },
+                { word: "as", probability: 0.35, next: null },
+                { word: "to", probability: 0.12, next: null },
+                { word: "for", probability: 0.05, next: null },
+                { word: "by", probability: 0.03, next: null }
+              ]
+            },
+            {
+              word: "one",
+              probability: 0.015,
+              next: [
+                { word: "of", probability: 0.85, next: null },
+                { word: "that", probability: 0.08, next: null },
+                { word: "city", probability: 0.04, next: null },
+                { word: "word", probability: 0.02, next: null },
+                { word: "place", probability: 0.01, next: null }
+              ]
+            },
+            {
+              word: "the",
+              probability: 0.005,
+              next: [
+                { word: "most", probability: 0.5, next: null },
+                { word: "city", probability: 0.25, next: null },
+                { word: "heart", probability: 0.13, next: null },
+                { word: "centre", probability: 0.08, next: null },
+                { word: "jewel", probability: 0.04, next: null }
+              ]
+            }
+          ]
+        },
+        {
+          id: "story",
+          label: "Once upon a time there was a",
+          prefix: ["Once", "upon", "a", "time", "there", "was", "a"],
+          candidates: [
+            {
+              word: "young",
+              probability: 0.28,
+              next: [
+                {
+                  word: "girl",
+                  probability: 0.35,
+                  next: [
+                    { word: "who", probability: 0.72, next: null },
+                    { word: "named", probability: 0.15, next: null },
+                    { word: "with", probability: 0.08, next: null },
+                    { word: "living", probability: 0.03, next: null },
+                    { word: "from", probability: 0.02, next: null }
+                  ]
+                },
+                { word: "boy", probability: 0.3, next: null },
+                { word: "prince", probability: 0.18, next: null },
+                { word: "woman", probability: 0.1, next: null },
+                { word: "man", probability: 0.07, next: null }
+              ]
+            },
+            {
+              word: "king",
+              probability: 0.22,
+              next: [
+                { word: "who", probability: 0.55, next: null },
+                { word: "named", probability: 0.18, next: null },
+                { word: "with", probability: 0.12, next: null },
+                { word: "ruling", probability: 0.08, next: null },
+                { word: "in", probability: 0.07, next: null }
+              ]
+            },
+            {
+              word: "girl",
+              probability: 0.18,
+              next: [
+                { word: "who", probability: 0.6, next: null },
+                { word: "named", probability: 0.2, next: null },
+                { word: "with", probability: 0.1, next: null },
+                { word: "living", probability: 0.06, next: null },
+                { word: "from", probability: 0.04, next: null }
+              ]
+            },
+            {
+              word: "little",
+              probability: 0.17,
+              next: [
+                { word: "girl", probability: 0.3, next: null },
+                { word: "boy", probability: 0.25, next: null },
+                { word: "village", probability: 0.2, next: null },
+                { word: "rabbit", probability: 0.15, next: null },
+                { word: "mouse", probability: 0.1, next: null }
+              ]
+            },
+            {
+              word: "brave",
+              probability: 0.15,
+              next: [
+                { word: "knight", probability: 0.4, next: null },
+                { word: "warrior", probability: 0.25, next: null },
+                { word: "young", probability: 0.18, next: null },
+                { word: "princess", probability: 0.1, next: null },
+                { word: "girl", probability: 0.07, next: null }
+              ]
+            }
+          ]
+        },
+        {
+          id: "learnai",
+          label: "The best way to learn AI is",
+          prefix: ["The", "best", "way", "to", "learn", "AI", "is"],
+          candidates: [
+            {
+              word: "by",
+              probability: 0.35,
+              next: [
+                {
+                  word: "doing",
+                  probability: 0.5,
+                  next: [
+                    { word: "—", probability: 0.4, next: null },
+                    { word: ".", probability: 0.3, next: null },
+                    { word: "it", probability: 0.15, next: null },
+                    { word: "projects", probability: 0.1, next: null },
+                    { word: "hands-on", probability: 0.05, next: null }
+                  ]
+                },
+                { word: "building", probability: 0.22, next: null },
+                { word: "using", probability: 0.15, next: null },
+                { word: "experimenting", probability: 0.08, next: null },
+                { word: "starting", probability: 0.05, next: null }
+              ]
+            },
+            {
+              word: "to",
+              probability: 0.3,
+              next: [
+                { word: "start", probability: 0.42, next: null },
+                { word: "use", probability: 0.28, next: null },
+                { word: "practice", probability: 0.15, next: null },
+                { word: "experiment", probability: 0.1, next: null },
+                { word: "build", probability: 0.05, next: null }
+              ]
+            },
+            {
+              word: "through",
+              probability: 0.18,
+              next: [
+                { word: "hands-on", probability: 0.45, next: null },
+                { word: "practice", probability: 0.3, next: null },
+                { word: "real", probability: 0.13, next: null },
+                { word: "projects", probability: 0.08, next: null },
+                { word: "experimentation", probability: 0.04, next: null }
+              ]
+            },
+            {
+              word: "practice",
+              probability: 0.1,
+              next: [
+                { word: ".", probability: 0.55, next: null },
+                { word: "—", probability: 0.2, next: null },
+                { word: ",", probability: 0.15, next: null },
+                { word: "and", probability: 0.07, next: null },
+                { word: "with", probability: 0.03, next: null }
+              ]
+            },
+            {
+              word: "a",
+              probability: 0.07,
+              next: [
+                { word: "combination", probability: 0.35, next: null },
+                { word: "hands-on", probability: 0.28, next: null },
+                { word: "structured", probability: 0.2, next: null },
+                { word: "practical", probability: 0.12, next: null },
+                { word: "mix", probability: 0.05, next: null }
+              ]
+            }
+          ]
+        },
+        {
+          id: "email",
+          label: "In a formal email you should",
+          prefix: ["In", "a", "formal", "email", "you", "should"],
+          candidates: [
+            {
+              word: "always",
+              probability: 0.32,
+              next: [
+                {
+                  word: "use",
+                  probability: 0.4,
+                  next: [
+                    { word: "a", probability: 0.55, next: null },
+                    { word: "proper", probability: 0.22, next: null },
+                    { word: "clear", probability: 0.13, next: null },
+                    { word: "professional", probability: 0.07, next: null },
+                    { word: "appropriate", probability: 0.03, next: null }
+                  ]
+                },
+                { word: "include", probability: 0.25, next: null },
+                { word: "begin", probability: 0.18, next: null },
+                { word: "address", probability: 0.1, next: null },
+                { word: "maintain", probability: 0.07, next: null }
+              ]
+            },
+            {
+              word: "use",
+              probability: 0.25,
+              next: [
+                { word: "a", probability: 0.45, next: null },
+                { word: "professional", probability: 0.25, next: null },
+                { word: "clear", probability: 0.15, next: null },
+                { word: "proper", probability: 0.1, next: null },
+                { word: "polite", probability: 0.05, next: null }
+              ]
+            },
+            {
+              word: "begin",
+              probability: 0.18,
+              next: [
+                { word: "with", probability: 0.7, next: null },
+                { word: "by", probability: 0.2, next: null },
+                { word: "your", probability: 0.05, next: null },
+                { word: "the", probability: 0.03, next: null },
+                { word: "using", probability: 0.02, next: null }
+              ]
+            },
+            {
+              word: "keep",
+              probability: 0.15,
+              next: [
+                { word: "the", probability: 0.4, next: null },
+                { word: "your", probability: 0.3, next: null },
+                { word: "it", probability: 0.2, next: null },
+                { word: "a", probability: 0.07, next: null },
+                { word: "things", probability: 0.03, next: null }
+              ]
+            },
+            {
+              word: "avoid",
+              probability: 0.1,
+              next: [
+                { word: "using", probability: 0.45, next: null },
+                { word: "slang", probability: 0.25, next: null },
+                { word: "informal", probability: 0.15, next: null },
+                { word: "overly", probability: 0.1, next: null },
+                { word: "casual", probability: 0.05, next: null }
+              ]
+            }
+          ]
+        },
+        {
+          id: "meaning",
+          label: "The meaning of life is",
+          prefix: ["The", "meaning", "of", "life", "is"],
+          candidates: [
+            {
+              word: "a",
+              probability: 0.24,
+              next: [
+                {
+                  word: "question",
+                  probability: 0.35,
+                  next: [
+                    { word: "that", probability: 0.65, next: null },
+                    { word: "philosophers", probability: 0.18, next: null },
+                    { word: "every", probability: 0.1, next: null },
+                    { word: "as", probability: 0.05, next: null },
+                    { word: "worth", probability: 0.02, next: null }
+                  ]
+                },
+                { word: "deeply", probability: 0.25, next: null },
+                { word: "personal", probability: 0.2, next: null },
+                { word: "topic", probability: 0.12, next: null },
+                { word: "matter", probability: 0.08, next: null }
+              ]
+            },
+            {
+              word: "to",
+              probability: 0.22,
+              next: [
+                { word: "find", probability: 0.35, next: null },
+                { word: "live", probability: 0.25, next: null },
+                { word: "love", probability: 0.18, next: null },
+                { word: "create", probability: 0.12, next: null },
+                { word: "serve", probability: 0.1, next: null }
+              ]
+            },
+            {
+              word: "different",
+              probability: 0.18,
+              next: [
+                { word: "for", probability: 0.7, next: null },
+                { word: "depending", probability: 0.15, next: null },
+                { word: "things", probability: 0.08, next: null },
+                { word: "across", probability: 0.05, next: null },
+                { word: "—", probability: 0.02, next: null }
+              ]
+            },
+            {
+              word: "something",
+              probability: 0.2,
+              next: [
+                { word: "that", probability: 0.4, next: null },
+                { word: "each", probability: 0.25, next: null },
+                { word: "deeply", probability: 0.18, next: null },
+                { word: "personal", probability: 0.12, next: null },
+                { word: "we", probability: 0.05, next: null }
+              ]
+            },
+            {
+              word: "subjective",
+              probability: 0.16,
+              next: [
+                { word: "—", probability: 0.35, next: null },
+                { word: ".", probability: 0.25, next: null },
+                { word: ",", probability: 0.2, next: null },
+                { word: "and", probability: 0.12, next: null },
+                { word: "but", probability: 0.08, next: null }
+              ]
+            }
+          ]
+        },
+        {
+          id: "recipe",
+          label: "My favourite recipe for",
+          prefix: ["My", "favourite", "recipe", "for"],
+          candidates: [
+            {
+              word: "chocolate",
+              probability: 0.2,
+              next: [
+                {
+                  word: "cake",
+                  probability: 0.45,
+                  next: [
+                    { word: "is", probability: 0.6, next: null },
+                    { word: "involves", probability: 0.18, next: null },
+                    { word: "uses", probability: 0.12, next: null },
+                    { word: "requires", probability: 0.06, next: null },
+                    { word: "starts", probability: 0.04, next: null }
+                  ]
+                },
+                { word: "chip", probability: 0.3, next: null },
+                { word: "brownies", probability: 0.13, next: null },
+                { word: "mousse", probability: 0.08, next: null },
+                { word: "cookies", probability: 0.04, next: null }
+              ]
+            },
+            {
+              word: "pasta",
+              probability: 0.19,
+              next: [
+                { word: "is", probability: 0.5, next: null },
+                { word: "involves", probability: 0.2, next: null },
+                { word: "uses", probability: 0.15, next: null },
+                { word: "starts", probability: 0.1, next: null },
+                { word: "requires", probability: 0.05, next: null }
+              ]
+            },
+            {
+              word: "chicken",
+              probability: 0.18,
+              next: [
+                { word: "is", probability: 0.4, next: null },
+                { word: "involves", probability: 0.22, next: null },
+                { word: "uses", probability: 0.18, next: null },
+                { word: "stir-fry", probability: 0.12, next: null },
+                { word: "soup", probability: 0.08, next: null }
+              ]
+            },
+            {
+              word: "a",
+              probability: 0.22,
+              next: [
+                { word: "simple", probability: 0.35, next: null },
+                { word: "quick", probability: 0.25, next: null },
+                { word: "hearty", probability: 0.18, next: null },
+                { word: "classic", probability: 0.14, next: null },
+                { word: "homemade", probability: 0.08, next: null }
+              ]
+            },
+            {
+              word: "banana",
+              probability: 0.21,
+              next: [
+                { word: "bread", probability: 0.65, next: null },
+                { word: "pancakes", probability: 0.18, next: null },
+                { word: "smoothie", probability: 0.1, next: null },
+                { word: "cake", probability: 0.05, next: null },
+                { word: "pudding", probability: 0.02, next: null }
+              ]
+            }
+          ]
+        }
+      ];
+
+      // ============================================================
+      // STATE
+      // ============================================================
+      let currentDataIndex = 0;
+      let sentenceWords = [];
+      let currentNode = null;
+      let selectionCount = 0;
+      let lowProbSelected = false;
+      let highProbSelected = false;
+      let insightShown = { generic: false, creative: false, cumulative: false };
+
+      // ============================================================
+      // DOM REFS
+      // ============================================================
+      const sentenceDisplay = document.getElementById("sentenceDisplay");
+      const candidatesCard = document.getElementById("candidatesCard");
+      const insightEl = document.getElementById("insight");
+      const insightText = document.getElementById("insightText");
+      const dropdownBtn = document.getElementById("dropdownBtn");
+      const dropdownMenu = document.getElementById("dropdownMenu");
+      const resetBtn = document.getElementById("resetBtn");
+      const explainer = document.getElementById("explainer");
+
+      // ============================================================
+      // EXPLAINER TOGGLE
+      // ============================================================
+      explainer.addEventListener("click", () => {
+        explainer.classList.toggle("collapsed");
+        explainer.setAttribute(
+          "aria-expanded",
+          !explainer.classList.contains("collapsed")
+        );
+      });
+      explainer.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          explainer.click();
+        }
+      });
+
+      // ============================================================
+      // DROPDOWN
+      // ============================================================
+      function buildDropdown() {
+        dropdownMenu.innerHTML = "";
+        DATA.forEach((d, i) => {
+          const item = document.createElement("div");
+          item.className =
+            "dropdown-item" + (i === currentDataIndex ? " active" : "");
+          item.textContent = '"' + d.label + '"';
+          item.setAttribute("role", "menuitem");
+          item.tabIndex = 0;
+          item.addEventListener("click", () => {
+            currentDataIndex = i;
+            closeDropdown();
+            resetAll();
+          });
+          item.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              item.click();
+            }
+          });
+          dropdownMenu.appendChild(item);
+        });
+      }
+
+      function toggleDropdown() {
+        const open = dropdownMenu.classList.toggle("open");
+        dropdownBtn.setAttribute("aria-expanded", open);
+      }
+      function closeDropdown() {
+        dropdownMenu.classList.remove("open");
+        dropdownBtn.setAttribute("aria-expanded", "false");
+      }
+
+      dropdownBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleDropdown();
+      });
+      document.addEventListener("click", closeDropdown);
+
+      // ============================================================
+      // RENDER
+      // ============================================================
+      function renderSentence() {
+        sentenceDisplay.innerHTML = "";
+        sentenceWords.forEach((w, i) => {
+          const span = document.createElement("span");
+          span.className = "sentence-word";
+          span.textContent = w + "\u00A0";
+          if (i >= DATA[currentDataIndex].prefix.length) {
+            if (i === sentenceWords.length - 1) {
+              span.classList.add("new");
+              setTimeout(() => span.classList.remove("new"), 600);
+            }
+          }
+          sentenceDisplay.appendChild(span);
+        });
+
+        const cursor = document.createElement("span");
+        cursor.className = "cursor-blink";
+        cursor.setAttribute("aria-hidden", "true");
+        sentenceDisplay.appendChild(cursor);
+      }
+
+      function renderCandidates(candidates) {
+        candidatesCard.innerHTML = "";
+        if (!candidates || candidates.length === 0) {
+          const end = document.createElement("div");
+          end.style.cssText =
+            "padding:16px 24px;color:var(--muted);font-size:0.9rem;";
+          end.textContent =
+            "End of prediction tree reached. Try another sentence or reset.";
+          candidatesCard.appendChild(end);
+          return;
+        }
+
+        candidates.forEach((c, i) => {
+          const row = document.createElement("div");
+          row.className = "candidate-row";
+          row.setAttribute("role", "listitem");
+          row.tabIndex = 0;
+          row.innerHTML = `
+      <span class="candidate-word">${escapeHtml(c.word)}</span>
+      <div class="candidate-bar-track"><div class="candidate-bar" data-prob="${c.probability}"></div></div>
+      <span class="candidate-prob">${(c.probability * 100).toFixed(c.probability < 0.01 ? 1 : 0)}%</span>
+      <span class="candidate-arrow" aria-hidden="true">&#8592;</span>
+    `;
+          row.addEventListener("click", () => selectWord(c));
+          row.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              selectWord(c);
+            }
+          });
+          candidatesCard.appendChild(row);
+
+          setTimeout(
+            () => {
+              row.classList.add("visible");
+              row.querySelector(".candidate-bar").style.width =
+                c.probability * 100 + "%";
+            },
+            50 + i * 50
+          );
+        });
+      }
+
+      function selectWord(candidate) {
+        selectionCount++;
+        sentenceWords.push(candidate.word);
+
+        if (candidate.probability >= 0.5) highProbSelected = true;
+        if (candidate.probability < 0.15) lowProbSelected = true;
+
+        renderSentence();
+
+        if (candidate.next) {
+          renderCandidates(candidate.next);
+        } else {
+          renderCandidates(null);
+        }
+
+        showContextualInsight(candidate);
+      }
+
+      function showContextualInsight(candidate) {
+        if (selectionCount >= 5 && !insightShown.cumulative) {
+          insightShown.cumulative = true;
+          showInsight(
+            "Every word you see was chosen this way — one at a time. An entire paragraph, an entire essay, is built through thousands of these tiny predictions."
+          );
+        } else if (
+          candidate.probability >= 0.5 &&
+          !insightShown.generic &&
+          selectionCount <= 3
+        ) {
+          insightShown.generic = true;
+          showInsight(
+            "The model picked the most common pattern. This is why AI output can feel generic — it defaults to what's statistically safest."
+          );
+        } else if (candidate.probability < 0.15 && !insightShown.creative) {
+          insightShown.creative = true;
+          showInsight(
+            "You chose an unusual path. When the model picks less probable words, the output becomes more creative — but also less predictable. This is what the 'temperature' setting controls."
+          );
+        }
+      }
+
+      function showInsight(text) {
+        insightText.textContent = text;
+        insightEl.classList.remove("visible");
+        void insightEl.offsetWidth;
+        insightEl.classList.add("visible");
+      }
+
+      function hideInsight() {
+        insightEl.classList.remove("visible");
+      }
+
+      function resetAll() {
+        const data = DATA[currentDataIndex];
+        sentenceWords = [...data.prefix];
+        currentNode = data;
+        selectionCount = 0;
+        lowProbSelected = false;
+        highProbSelected = false;
+        insightShown = { generic: false, creative: false, cumulative: false };
+        hideInsight();
+        renderSentence();
+        renderCandidates(data.candidates);
+        buildDropdown();
+      }
+
+      function escapeHtml(s) {
+        const d = document.createElement("div");
+        d.textContent = s;
+        return d.innerHTML;
+      }
+
+      // ============================================================
+      // RESET
+      // ============================================================
+      resetBtn.addEventListener("click", resetAll);
+
+      // ============================================================
+      // INIT
+      // ============================================================
+      buildDropdown();
+      resetAll();
+    </script>
+  </body>
+</html>

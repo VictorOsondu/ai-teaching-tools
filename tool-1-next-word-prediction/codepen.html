@@ -1,0 +1,53 @@
+<div class="container">
+  <!-- Header -->
+  <div class="header">
+    <h1>Next-Word Prediction</h1>
+  </div>
+  <div class="header-line"></div>
+
+  <!-- Explainer -->
+  <div class="card explainer" id="explainer" tabindex="0" role="button" aria-expanded="true" aria-label="Toggle explanation">
+    <div class="explainer-toggle">
+      <span>How this works</span>
+      <span class="chevron">&#9660;</span>
+    </div>
+    <div class="explainer-text">
+      AI doesn't look up answers. It predicts the most likely next word — then the next, then the next. This is how every response is built.
+    </div>
+  </div>
+
+  <!-- Sentence area -->
+  <div class="card">
+    <div class="sentence-label">Sentence so far</div>
+    <div class="sentence-display" id="sentenceDisplay" aria-live="polite"></div>
+  </div>
+
+  <!-- Candidates prompt -->
+  <div class="candidates-prompt">What comes next? The model sees these options:</div>
+
+  <!-- Candidate list -->
+  <div class="card candidates-card" id="candidatesCard" role="list" aria-label="Word candidates">
+  </div>
+
+  <!-- Instruction -->
+  <p class="instruction">Click any word to select it and continue building.</p>
+
+  <!-- Insight -->
+  <div class="insight" id="insight" role="status" aria-live="polite">
+    <span class="insight-icon">&#128161;</span>
+    <span id="insightText"></span>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <div class="dropdown-wrap">
+      <button class="dropdown-btn" id="dropdownBtn" aria-haspopup="true" aria-expanded="false">
+        Try a new sentence <span>&#9662;</span>
+      </button>
+      <div class="dropdown-menu" id="dropdownMenu" role="menu">
+      </div>
+    </div>
+    <button class="reset-btn" id="resetBtn" aria-label="Reset sentence">Reset &#8634;</button>
+  </div>
+
+</div>
