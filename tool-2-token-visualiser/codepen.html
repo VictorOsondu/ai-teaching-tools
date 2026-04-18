@@ -1,0 +1,79 @@
+<div class="container">
+  <!-- Header -->
+  <header class="header">
+    <h1>Token Visualiser</h1>
+    <div class="header-accent"></div>
+  </header>
+
+  <!-- Explainer -->
+  <div class="card explainer" id="explainer">
+    <button class="explainer-toggle" id="explainerToggle" aria-expanded="true" aria-controls="explainerBody">
+      <span>How this works</span>
+      <span class="explainer-arrow">&#9660;</span>
+    </button>
+    <div class="explainer-body" id="explainerBody">
+      AI doesn't read words like you do. It splits text into "tokens" &mdash; fragments that don't always match whole words. This affects cost, speed, and how much text the AI can process at once.
+    </div>
+  </div>
+
+  <!-- Input -->
+  <div class="card">
+    <div class="card-label">Type or paste your text</div>
+    <textarea class="text-input" id="textInput" placeholder="Start typing or pick an example below..." spellcheck="false" aria-label="Text to tokenise">I need to write a quarterly report for my team about our sustainability targets.</textarea>
+  </div>
+
+  <!-- Token display -->
+  <div class="card">
+    <div class="card-label">How AI sees your text</div>
+    <div class="token-display" id="tokenDisplay" role="region" aria-live="polite" aria-label="Tokenised output"></div>
+  </div>
+
+  <!-- Insight callout -->
+  <div id="insightArea"></div>
+
+  <!-- Stats -->
+  <div class="card">
+    <div class="card-label">Stats</div>
+    <div class="stats-grid">
+      <div class="stat-item">
+        <div class="stat-value" id="wordCount">0</div>
+        <div class="stat-label">Words</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="tokenCount">0</div>
+        <div class="stat-label">Tokens</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="ratioValue">0x</div>
+        <div class="stat-label">Ratio</div>
+      </div>
+    </div>
+    <div class="context-bar-wrap">
+      <div class="context-bar-label">
+        <span>Context usage</span>
+        <span id="contextPct">0%</span>
+      </div>
+      <div class="context-bar-track">
+        <div class="context-bar-fill" id="contextFill" style="width:0%"></div>
+      </div>
+      <div style="font-size:0.7rem;color:var(--muted);margin-top:3px;">of Claude's 200K token window</div>
+    </div>
+    <div class="cost-line">Estimated cost: <span id="costValue">&lt; &pound;0.001</span></div>
+  </div>
+
+  <!-- Bottom bar -->
+  <div class="bottom-bar">
+    <div class="examples-wrap">
+      <button class="examples-btn" id="examplesBtn" aria-haspopup="true" aria-expanded="false">Try these examples &#9662;</button>
+      <div class="examples-menu" id="examplesMenu" role="menu">
+        <button role="menuitem" data-text="Hello world">Hello world</button>
+        <button role="menuitem" data-text="Artificial intelligence is transforming">Artificial intelligence is transforming</button>
+        <button role="menuitem" data-text="My email is victor@aitutorium.com">My email is victor@aitutorium.com</button>
+        <button role="menuitem" data-text="The price is £1,250.99">The price is &pound;1,250.99</button>
+        <button role="menuitem" data-text="Антон работает в Лондоне">&#1040;&#1085;&#1090;&#1086;&#1085; &#1088;&#1072;&#1073;&#1086;&#1090;&#1072;&#1077;&#1090; &#1074; &#1051;&#1086;&#1085;&#1076;&#1086;&#1085;&#1077;</button>
+        <button role="menuitem" data-text="Supercalifragilisticexpialidocious">Supercalifragilisticexpialidocious</button>
+      </div>
+    </div>
+    <button class="reset-btn" id="resetBtn">Reset &#8634;</button>
+  </div>
+</div>

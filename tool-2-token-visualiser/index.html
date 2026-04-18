@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!--
+ATTRIBUTION:
+
+"Token Visualiser" by Victor Osondu
+
+Licensed under CC BY 4.0
+https://creativecommons.org/licenses/by/4.0/
+
+To attribute this work, please include the above text and link.
+-->
+<title>Token Visualiser</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="license" href="https://creativecommons.org/licenses/by/4.0/" />
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #1a1a2e;
+  --bg-nav: #16213e;
+  --surface: rgba(255,255,255,0.05);
+  --border: rgba(255,255,255,0.1);
+  --accent: #6366f1;
+  --accent-glow: rgba(99,102,241,0.3);
+  --amber: #f0a500;
+  --text: #e8e8e8;
+  --heading: #ffffff;
+  --muted: #888888;
+  --radius: 16px;
+  --font: "Inter", system-ui, sans-serif;
+  --mono: "JetBrains Mono", "Fira Code", monospace;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  background-image: radial-gradient(ellipse at 50% 20%, var(--bg-nav) 0%, var(--bg) 70%);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px 24px 48px;
+}
+
+/* Header */
+.header {
+  margin-bottom: 8px;
+}
+.header h2 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--heading);
+  letter-spacing: -0.02em;
+}
+.header-accent {
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), transparent);
+  border-radius: 2px;
+  margin-top: 8px;
+  margin-bottom: 24px;
+}
+
+/* Card */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 24px;
+  margin-bottom: 20px;
+}
+.card-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+/* Explainer */
+.explainer {
+  position: relative;
+}
+.explainer-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-family: var(--font);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  width: 100%;
+  padding: 0;
+  margin-bottom: 12px;
+}
+.explainer-toggle:hover { color: var(--text); }
+.explainer-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.explainer-arrow {
+  transition: transform 0.3s ease-out;
+  font-size: 0.65rem;
+}
+.explainer.collapsed .explainer-arrow { transform: rotate(-90deg); }
+.explainer-body {
+  color: var(--text);
+  font-size: 0.92rem;
+  line-height: 1.65;
+  overflow: hidden;
+  max-height: 200px;
+  transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+  opacity: 1;
+}
+.explainer.collapsed .explainer-body {
+  max-height: 0;
+  opacity: 0;
+}
+
+/* Textarea */
+.text-input {
+  width: 100%;
+  min-height: 90px;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 0.95rem;
+  padding: 16px;
+  resize: vertical;
+  line-height: 1.6;
+  transition: border-color 0.2s ease-out;
+}
+.text-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.text-input::placeholder { color: rgba(255,255,255,0.25); }
+
+/* Token display */
+.token-display {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 42px;
+  align-items: center;
+}
+.token-pill {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 5px 10px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: default;
+  position: relative;
+  animation: tokenAppear 0.2s ease-out both;
+  transition: border-color 0.15s ease-out, box-shadow 0.15s ease-out;
+}
+.token-pill:hover {
+  border-color: rgba(255,255,255,0.4);
+  box-shadow: 0 0 8px rgba(255,255,255,0.1);
+  z-index: 2;
+}
+.token-pill:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* Token colours */
+.token-c0 { background: rgba(100,149,237,0.2); color: #a0c4ff; }
+.token-c1 { background: rgba(80,200,120,0.2); color: #86efac; }
+.token-c2 { background: rgba(160,100,220,0.2); color: #c4b5fd; }
+.token-c3 { background: rgba(240,165,0,0.18); color: #fcd34d; }
+.token-c4 { background: rgba(240,100,150,0.2); color: #fda4af; }
+.token-c5 { background: rgba(99,102,241,0.18); color: #a5b4fc; }
+
+@keyframes tokenAppear {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Token tooltip */
+.token-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1e1e3a;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-family: var(--font);
+  font-size: 0.78rem;
+  color: var(--text);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease-out;
+  z-index: 10;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+.token-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #1e1e3a;
+}
+.token-pill:hover .token-tooltip { opacity: 1; }
+.token-tooltip .tt-row { display: flex; justify-content: space-between; gap: 16px; }
+.token-tooltip .tt-label { color: var(--muted); }
+.token-tooltip .tt-value { color: var(--accent); font-family: var(--mono); font-weight: 500; }
+
+/* Split word connector */
+.word-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  position: relative;
+}
+.word-group .token-pill { border-radius: 8px; }
+.split-connector {
+  width: 8px;
+  height: 2px;
+  background: repeating-linear-gradient(90deg, var(--muted) 0 3px, transparent 3px 6px);
+  flex-shrink: 0;
+  opacity: 0;
+  animation: connectorDraw 0.2s ease-out 0.15s forwards;
+}
+@keyframes connectorDraw {
+  to { opacity: 0.6; }
+}
+
+/* Stats */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.stat-item {
+  text-align: center;
+}
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--heading);
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+.stat-label {
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 2px;
+}
+
+/* Context bar */
+.context-bar-wrap {
+  margin-bottom: 8px;
+}
+.context-bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.context-bar-track {
+  height: 10px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 5px;
+  overflow: hidden;
+}
+.context-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), rgba(99,102,241,0.5));
+  border-radius: 5px;
+  transition: width 0.4s ease-out;
+  min-width: 2px;
+}
+.cost-line {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-top: 8px;
+  text-align: right;
+}
+.cost-line span {
+  color: var(--amber);
+  font-family: var(--mono);
+  font-weight: 500;
+}
+
+/* Insight callout */
+.insight {
+  background: rgba(99,102,241,0.06);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 12px 12px 0;
+  padding: 14px 18px;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--text);
+  margin-bottom: 20px;
+  animation: insightFade 0.3s ease-out;
+}
+@keyframes insightFade {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Bottom bar */
+.bottom-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* Examples dropdown */
+.examples-wrap {
+  position: relative;
+}
+.examples-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 10px 18px;
+  cursor: pointer;
+  transition: border-color 0.2s ease-out, background 0.2s ease-out;
+}
+.examples-btn:hover {
+  border-color: var(--accent);
+  background: rgba(99,102,241,0.08);
+}
+.examples-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.examples-menu {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  background: #1e1e3a;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 6px 0;
+  min-width: 320px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  z-index: 20;
+  display: none;
+}
+.examples-menu.open { display: block; }
+.examples-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  padding: 10px 18px;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.examples-menu button:hover {
+  background: rgba(99,102,241,0.1);
+}
+.examples-menu button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* Reset */
+.reset-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--muted);
+  font-family: var(--font);
+  font-size: 0.85rem;
+  padding: 10px 18px;
+  cursor: pointer;
+  transition: color 0.2s ease-out, border-color 0.2s ease-out;
+}
+.reset-btn:hover {
+  color: var(--text);
+  border-color: rgba(255,255,255,0.3);
+}
+.reset-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.license-info {
+  font-size: 0.8rem;
+  padding: 20px;
+  text-align: center;
+  color: #666;
+}
+
+/* Responsive */
+@media (max-width: 520px) {
+  .container { padding: 20px 14px 32px; }
+  .stats-grid { grid-template-columns: 1fr; gap: 10px; }
+  .stat-item { display: flex; justify-content: space-between; align-items: center; text-align: left; }
+  .stat-value { font-size: 1.2rem; }
+  .examples-menu { min-width: 260px; }
+  .bottom-bar { flex-direction: column; align-items: stretch; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <!-- Header -->
+  <header class="header">
+    <h2>Token Visualiser</h2>
+    <div class="header-accent"></div>
+  </header>
+
+  <!-- Explainer -->
+  <div class="card explainer" id="explainer">
+    <button class="explainer-toggle" id="explainerToggle" aria-expanded="true" aria-controls="explainerBody">
+      <span>How this works</span>
+      <span class="explainer-arrow">&#9660;</span>
+    </button>
+    <div class="explainer-body" id="explainerBody">
+      AI doesn't read words like you do. It splits text into "tokens" &mdash; fragments that don't always match whole words. This affects cost, speed, and how much text the AI can process at once.
+      <br><br>
+      <em style="font-size:0.82rem;color:var(--muted);">Note: this is a simplified illustration for educational purposes. Actual tokenisation varies by model and is not accurately represented here.</em>
+    </div>
+  </div>
+
+  <!-- Input -->
+  <div class="card">
+    <div class="card-label">Type or paste your text</div>
+    <textarea class="text-input" id="textInput" placeholder="Start typing or pick an example below..." spellcheck="false" aria-label="Text to tokenise">I need to write a quarterly report for my team about our sustainability targets.</textarea>
+  </div>
+
+  <!-- Token display -->
+  <div class="card">
+    <div class="card-label">How AI sees your text</div>
+    <div class="token-display" id="tokenDisplay" role="region" aria-live="polite" aria-label="Tokenised output"></div>
+  </div>
+
+  <!-- Insight callout -->
+  <div id="insightArea"></div>
+
+  <!-- Stats -->
+  <div class="card">
+    <div class="card-label">Stats</div>
+    <div class="stats-grid">
+      <div class="stat-item">
+        <div class="stat-value" id="wordCount">0</div>
+        <div class="stat-label">Words</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="tokenCount">0</div>
+        <div class="stat-label">Tokens</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="ratioValue">0x</div>
+        <div class="stat-label">Ratio</div>
+      </div>
+    </div>
+    <div class="context-bar-wrap">
+      <div class="context-bar-label">
+        <span>Context usage</span>
+        <span id="contextPct">0%</span>
+      </div>
+      <div class="context-bar-track">
+        <div class="context-bar-fill" id="contextFill" style="width:0%"></div>
+      </div>
+      <div style="font-size:0.7rem;color:var(--muted);margin-top:3px;">of a typical 200K token window</div>
+    </div>
+    <div class="cost-line">Estimated cost: <span id="costValue">&lt; &pound;0.001</span></div>
+  </div>
+
+  <!-- Bottom bar -->
+  <div class="bottom-bar">
+    <div class="examples-wrap">
+      <button class="examples-btn" id="examplesBtn" aria-haspopup="true" aria-expanded="false">Try these examples &#9662;</button>
+      <div class="examples-menu" id="examplesMenu" role="menu">
+        <button role="menuitem" data-text="Hello world">Hello world</button>
+        <button role="menuitem" data-text="Artificial intelligence is transforming">Artificial intelligence is transforming</button>
+        <button role="menuitem" data-text="My email is hello@example.com">My email is hello@example.com</button>
+        <button role="menuitem" data-text="The price is £1,250.99">The price is &pound;1,250.99</button>
+        <button role="menuitem" data-text="Антон работает в Лондоне">&#1040;&#1085;&#1090;&#1086;&#1085; &#1088;&#1072;&#1073;&#1086;&#1090;&#1072;&#1077;&#1090; &#1074; &#1051;&#1086;&#1085;&#1076;&#1086;&#1085;&#1077;</button>
+        <button role="menuitem" data-text="Supercalifragilisticexpialidocious">Supercalifragilisticexpialidocious</button>
+      </div>
+    </div>
+    <button class="reset-btn" id="resetBtn">Reset &#8634;</button>
+  </div>
+
+  <!-- Footer -->
+  <footer class="license-info">
+    This work is licensed under
+    <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="license noopener noreferrer">CC BY 4.0</a>.
+  </footer>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // ── Tokeniser vocabulary ──────────────────────────────────
+  // Common whole words that stay intact
+  const WHOLE_WORDS = new Set([
+    'i','a','the','is','am','are','was','were','be','been','being',
+    'have','has','had','do','does','did','will','would','could','should',
+    'shall','may','might','can','must','need','dare',
+    'and','or','but','if','then','else','when','while','for','to','from',
+    'in','on','at','by','with','about','of','up','out','off','over',
+    'into','onto','upon','after','before','between','through','during',
+    'without','within','along','across','behind','beyond','until',
+    'not','no','nor','so','yet','both','each','few','more','most',
+    'other','some','such','than','too','very','just','also',
+    'it','he','she','we','they','me','him','her','us','them',
+    'my','your','his','its','our','their','mine','yours','ours','theirs',
+    'this','that','these','those','what','which','who','whom','whose',
+    'where','here','there','how','why','all','any','every','no',
+    'one','two','three','four','five','six','seven','eight','nine','ten',
+    'new','old','good','bad','big','small','great','little','long','short',
+    'high','low','right','left','first','last','next','own','same',
+    'able','much','many','well','still','back','even','now',
+    'get','got','make','made','go','went','come','came','take','took',
+    'see','saw','know','knew','think','say','said','tell','told',
+    'give','gave','find','found','want','let','put','set','run','ran',
+    'keep','kept','help','turn','start','show','hear','heard','play',
+    'move','live','believe','happen','work','write','read','learn',
+    'try','ask','use','look','feel','felt','leave','left','call',
+    'world','hello','day','time','year','way','man','woman','life',
+    'hand','part','place','case','week','head','end','side','team',
+    'word','fact','eye','water','point','house','page','night',
+    'report','data','text','code','file','name','type','line',
+    'cost','price','plan','rate','test','note','list','form',
+    'write','email','send','open','close','save','load','view',
+    'quarterly','monthly','weekly','daily','annual','sustainability',
+    'about','people','because','different','between','important',
+    'another','company','system','program','question','during',
+    'country','school','number','really','almost','around',
+    'again','already','always','example','family','government',
+    'information','possible','business','together','market',
+    'nothing','service','enough','several','against','history',
+    'morning','anything','power','human','process','student',
+    'however','second','something','continue','research','change',
+    'money','follow','problem','social','often','support',
+    'young','using','working','interest','order','million',
+    'actually','remember','probably','moment','reason','early',
+    'morning','table','though','state','level','local',
+    'everything','art','experience','per','target','targets',
+  ]);
+
+  // Common suffixes (order matters — longer first)
+  const SUFFIXES = [
+    'ization','isation','fulness','ousness','ibility','ability',
+    'ement','ment','ness','tion','sion','ence','ance','ling',
+    'ious','eous','ible','able','ical','ful','less','ness',
+    'ment','ting','ring','ning','ding','king','ping','sing',
+    'ated','ized','ised','ling','ally','ously','ively',
+    'ing','ity','ous','ive','ure','ent','ant','ist','ism',
+    'ful','dom','ship','ward','wise','like',
+    'tion','age','ery','ary','ory','ess',
+    'ed','er','en','ly','al','ty','le','ry','ny',
+  ];
+
+  // Common prefixes
+  const PREFIXES = [
+    'trans','super','inter','under','over','multi','counter',
+    'auto','anti','semi','micro','macro','mega','ultra',
+    'fore','mis','non','self',
+    'un','re','pre','dis','out','sub',
+  ];
+
+  // Common subword fragments
+  const COMMON_FRAGMENTS = new Set([
+    'str','ch','sh','th','ph','wh','qu','tr','pr','cr','br','gr','fr',
+    'bl','cl','fl','gl','pl','sl','sp','st','sw','sc','sk','sm','sn',
+    'ght','ck','ng','nk','nt','nd','mp','ct','pt','ft','lt','lk',
+    'pro','con','com','per','for','ter','ver','ber','der','ger','ner',
+    'man','men','ful','less','able','ible','ment','ness','tion','sion',
+    'ing','ity','ous','ive','ent','ant','ist','ism','ate','ize','ise',
+    'quarter','sustain','artific','intellig','transform',
+  ]);
+
+  // Tokenise a single word (already lowercased for lookup but preserving original case)
+  function tokeniseWord(word) {
+    if (!word) return [];
+
+    // Check if entire word is common
+    if (WHOLE_WORDS.has(word.toLowerCase())) {
+      return [{ text: word, isWholeWord: true }];
+    }
+
+    // Try prefix + remainder
+    const lower = word.toLowerCase();
+    let bestSplit = null;
+
+    for (const prefix of PREFIXES) {
+      if (lower.startsWith(prefix) && lower.length > prefix.length + 1) {
+        const rest = word.slice(prefix.length);
+        const restTokens = tokeniseRemainder(rest);
+        if (restTokens) {
+          bestSplit = [
+            { text: word.slice(0, prefix.length), isWholeWord: false },
+            ...restTokens,
+          ];
+          break;
+        }
+      }
+    }
+
+    if (bestSplit) return bestSplit;
+
+    // Try stem + suffix
+    for (const suffix of SUFFIXES) {
+      if (lower.endsWith(suffix) && lower.length > suffix.length + 1) {
+        const stemLen = word.length - suffix.length;
+        const stem = word.slice(0, stemLen);
+        const suf = word.slice(stemLen);
+        if (stem.length >= 2) {
+          return [
+            { text: stem, isWholeWord: false },
+            { text: suf, isWholeWord: false },
+          ];
+        }
+      }
+    }
+
+    // If word is short enough, keep whole
+    if (word.length <= 5) {
+      return [{ text: word, isWholeWord: true }];
+    }
+
+    // Fallback: split into chunks of 3–5 chars
+    return chunkWord(word);
+  }
+
+  function tokeniseRemainder(word) {
+    if (WHOLE_WORDS.has(word.toLowerCase())) {
+      return [{ text: word, isWholeWord: true }];
+    }
+    // Try suffix
+    const lower = word.toLowerCase();
+    for (const suffix of SUFFIXES) {
+      if (lower.endsWith(suffix) && lower.length > suffix.length + 1) {
+        const stemLen = word.length - suffix.length;
+        const stem = word.slice(0, stemLen);
+        const suf = word.slice(stemLen);
+        if (stem.length >= 2) {
+          return [
+            { text: stem, isWholeWord: false },
+            { text: suf, isWholeWord: false },
+          ];
+        }
+      }
+    }
+    if (word.length <= 5) return [{ text: word, isWholeWord: false }];
+    return chunkWord(word);
+  }
+
+  function chunkWord(word) {
+    const tokens = [];
+    let i = 0;
+    while (i < word.length) {
+      const size = Math.min(4, word.length - i);
+      tokens.push({ text: word.slice(i, i + size), isWholeWord: false });
+      i += size;
+    }
+    return tokens;
+  }
+
+  // Tokenise non-ASCII word (each char becomes 2-3 tokens)
+  function tokeniseNonAscii(word) {
+    const tokens = [];
+    for (const ch of word) {
+      const code = ch.codePointAt(0);
+      // Simulate byte-level encoding: 2 tokens for BMP, 3 for supplementary
+      const count = code > 0xFFFF ? 3 : code > 0x7F ? 2 : 1;
+      if (count === 1) {
+        tokens.push({ text: ch, isWholeWord: true });
+      } else {
+        // Show as the char plus byte markers
+        tokens.push({ text: ch, isWholeWord: false });
+        for (let b = 1; b < count; b++) {
+          const byteHex = ((code >> (8 * (count - 1 - b))) & 0xFF).toString(16).padStart(2, '0');
+          tokens.push({ text: '0x' + byteHex, isWholeWord: false });
+        }
+      }
+    }
+    return tokens;
+  }
+
+  // Main tokeniser: splits text into token objects
+  function tokenise(text) {
+    if (!text.trim()) return [];
+
+    // Split on whitespace and punctuation boundaries
+    const segments = [];
+    let current = '';
+    let isNonAscii = false;
+
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      const code = ch.codePointAt(0);
+
+      if (/\s/.test(ch)) {
+        if (current) {
+          segments.push({ text: current, nonAscii: isNonAscii });
+          current = '';
+          isNonAscii = false;
+        }
+        continue;
+      }
+
+      // Punctuation / special chars = separate
+      if (/[.,!?;:'"()\[\]{}<>@#$%^&*+=\-_/\\|~`]/.test(ch) || ch === '\u00A3') {
+        if (current) {
+          segments.push({ text: current, nonAscii: isNonAscii });
+          current = '';
+          isNonAscii = false;
+        }
+        segments.push({ text: ch, nonAscii: false, isPunct: true });
+        continue;
+      }
+
+      // Digit boundary
+      const isDigit = /\d/.test(ch);
+      const prevIsDigit = current.length > 0 && /\d/.test(current[current.length - 1]);
+      if (current.length > 0 && isDigit !== prevIsDigit) {
+        segments.push({ text: current, nonAscii: isNonAscii });
+        current = '';
+        isNonAscii = false;
+      }
+
+      if (code > 127) isNonAscii = true;
+      current += ch;
+    }
+    if (current) segments.push({ text: current, nonAscii: isNonAscii });
+
+    // Tokenise each segment
+    const allTokens = [];
+    let tokenId = 0;
+
+    for (const seg of segments) {
+      if (seg.isPunct) {
+        allTokens.push({
+          id: tokenId++,
+          text: seg.text,
+          isWholeWord: true,
+          wordGroup: null,
+          charCount: seg.text.length,
+        });
+        continue;
+      }
+
+      // Digits: each digit or small group
+      if (/^\d+$/.test(seg.text)) {
+        const chunks = seg.text.match(/.{1,3}/g) || [];
+        const groupId = chunks.length > 1 ? allTokens.length : null;
+        for (const chunk of chunks) {
+          allTokens.push({
+            id: tokenId++,
+            text: chunk,
+            isWholeWord: chunks.length === 1,
+            wordGroup: chunks.length > 1 ? seg.text : null,
+            charCount: chunk.length,
+          });
+        }
+        continue;
+      }
+
+      if (seg.nonAscii) {
+        const parts = tokeniseNonAscii(seg.text);
+        for (const part of parts) {
+          allTokens.push({
+            id: tokenId++,
+            text: part.text,
+            isWholeWord: part.isWholeWord,
+            wordGroup: parts.length > 1 ? seg.text : null,
+            charCount: part.text.length,
+          });
+        }
+        continue;
+      }
+
+      const parts = tokeniseWord(seg.text);
+      for (const part of parts) {
+        allTokens.push({
+          id: tokenId++,
+          text: part.text,
+          isWholeWord: part.isWholeWord || parts.length === 1,
+          wordGroup: parts.length > 1 ? seg.text : null,
+          charCount: part.text.length,
+        });
+      }
+    }
+
+    return allTokens;
+  }
+
+  // ── DOM references ─────────────────────────────────────
+  const textInput = document.getElementById('textInput');
+  const tokenDisplay = document.getElementById('tokenDisplay');
+  const wordCountEl = document.getElementById('wordCount');
+  const tokenCountEl = document.getElementById('tokenCount');
+  const ratioEl = document.getElementById('ratioValue');
+  const contextPctEl = document.getElementById('contextPct');
+  const contextFillEl = document.getElementById('contextFill');
+  const costEl = document.getElementById('costValue');
+  const insightArea = document.getElementById('insightArea');
+  const explainer = document.getElementById('explainer');
+  const explainerToggle = document.getElementById('explainerToggle');
+  const examplesBtn = document.getElementById('examplesBtn');
+  const examplesMenu = document.getElementById('examplesMenu');
+  const resetBtn = document.getElementById('resetBtn');
+
+  const DEFAULT_TEXT = 'I need to write a quarterly report for my team about our sustainability targets.';
+  const CONTEXT_WINDOW = 200000;
+  const COST_PER_1K = 0.01; // £
+
+  // Insight tracking
+  const shownInsights = new Set();
+  let previousTokens = [];
+
+  // ── Explainer toggle ───────────────────────────────────
+  explainerToggle.addEventListener('click', () => {
+    const expanded = !explainer.classList.contains('collapsed');
+    explainer.classList.toggle('collapsed');
+    explainerToggle.setAttribute('aria-expanded', !expanded);
+  });
+
+  // ── Examples dropdown ──────────────────────────────────
+  examplesBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const open = examplesMenu.classList.toggle('open');
+    examplesBtn.setAttribute('aria-expanded', open);
+  });
+
+  document.addEventListener('click', () => {
+    examplesMenu.classList.remove('open');
+    examplesBtn.setAttribute('aria-expanded', 'false');
+  });
+
+  examplesMenu.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      textInput.value = btn.dataset.text;
+      examplesMenu.classList.remove('open');
+      examplesBtn.setAttribute('aria-expanded', 'false');
+      update();
+    });
+  });
+
+  // ── Reset ──────────────────────────────────────────────
+  resetBtn.addEventListener('click', () => {
+    textInput.value = DEFAULT_TEXT;
+    shownInsights.clear();
+    update();
+    textInput.focus();
+  });
+
+  // ── Animated counter ───────────────────────────────────
+  function animateCounter(el, target, suffix) {
+    const current = parseFloat(el.textContent) || 0;
+    if (current === target) {
+      el.textContent = suffix ? target + suffix : target;
+      return;
+    }
+    const start = performance.now();
+    const duration = 300;
+    const diff = target - current;
+
+    function tick(now) {
+      const t = Math.min((now - start) / duration, 1);
+      const ease = 1 - Math.pow(1 - t, 3);
+      const val = current + diff * ease;
+      if (suffix === 'x') {
+        el.textContent = val.toFixed(1) + 'x';
+      } else {
+        el.textContent = Math.round(val) + (suffix || '');
+      }
+      if (t < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  // ── Show insight ───────────────────────────────────────
+  function showInsight(key, message) {
+    if (shownInsights.has(key)) return;
+    shownInsights.add(key);
+    insightArea.innerHTML = `<div class="insight">${message}</div>`;
+    // Auto-dismiss after 12s
+    setTimeout(() => {
+      if (shownInsights.has(key) && insightArea.querySelector('.insight')) {
+        insightArea.innerHTML = '';
+      }
+    }, 12000);
+  }
+
+  // ── Render tokens ──────────────────────────────────────
+  function renderTokens(tokens) {
+    tokenDisplay.innerHTML = '';
+
+    let i = 0;
+    while (i < tokens.length) {
+      const token = tokens[i];
+
+      // Check if this is a multi-token word group
+      if (token.wordGroup) {
+        const groupWord = token.wordGroup;
+        const group = document.createElement('span');
+        group.className = 'word-group';
+        group.setAttribute('role', 'group');
+        group.setAttribute('aria-label', `Word "${groupWord}" split into fragments`);
+
+        let j = i;
+        let first = true;
+        while (j < tokens.length && tokens[j].wordGroup === groupWord) {
+          if (!first) {
+            const connector = document.createElement('span');
+            connector.className = 'split-connector';
+            connector.setAttribute('aria-hidden', 'true');
+            group.appendChild(connector);
+          }
+          group.appendChild(createTokenPill(tokens[j], j));
+          first = false;
+          j++;
+        }
+        tokenDisplay.appendChild(group);
+        i = j;
+      } else {
+        tokenDisplay.appendChild(createTokenPill(token, i));
+        i++;
+      }
+    }
+  }
+
+  function createTokenPill(token, index) {
+    const colorIndex = index % 6;
+    const pill = document.createElement('span');
+    pill.className = `token-pill token-c${colorIndex}`;
+    pill.setAttribute('tabindex', '0');
+    pill.setAttribute('role', 'button');
+    pill.setAttribute('aria-label', `Token: ${token.text}`);
+    pill.style.animationDelay = `${index * 30}ms`;
+    pill.textContent = token.text;
+
+    // Tooltip
+    const tooltip = document.createElement('span');
+    tooltip.className = 'token-tooltip';
+    tooltip.innerHTML = `
+      <div class="tt-row"><span class="tt-label">Token ID</span><span class="tt-value">${token.id}</span></div>
+      <div class="tt-row"><span class="tt-label">Characters</span><span class="tt-value">${token.charCount}</span></div>
+      <div class="tt-row"><span class="tt-label">Type</span><span class="tt-value">${token.isWholeWord ? 'Complete word' : 'Fragment'}</span></div>
+    `;
+    pill.appendChild(tooltip);
+
+    return pill;
+  }
+
+  // ── Main update ────────────────────────────────────────
+  function update() {
+    const text = textInput.value;
+    const tokens = tokenise(text);
+
+    renderTokens(tokens);
+
+    // Word count
+    const words = text.trim().split(/\s+/).filter(w => w.length > 0);
+    const wordCount = words.length;
+    const tokenCount = tokens.length;
+    const ratio = wordCount > 0 ? tokenCount / wordCount : 0;
+    const pct = tokenCount / CONTEXT_WINDOW * 100;
+    const cost = tokenCount / 1000 * COST_PER_1K;
+
+    animateCounter(wordCountEl, wordCount, '');
+    animateCounter(tokenCountEl, tokenCount, '');
+    animateCounter(ratioEl, Math.round(ratio * 10) / 10, 'x');
+    contextPctEl.textContent = pct < 0.001 && tokenCount > 0 ? '< 0.001%' : pct.toFixed(3) + '%';
+    contextFillEl.style.width = Math.max(pct, tokenCount > 0 ? 0.3 : 0) + '%';
+
+    if (cost < 0.001 && tokenCount > 0) {
+      costEl.innerHTML = '&lt; &pound;0.001';
+    } else {
+      costEl.textContent = '\u00A3' + cost.toFixed(3);
+    }
+
+    // Insights
+    const hasSplitWords = tokens.some(t => t.wordGroup);
+    const hasNonAscii = /[^\x00-\x7F]/.test(text);
+
+    if (tokenCount > 0 && hasSplitWords) {
+      // Find a good split example
+      const splitWord = tokens.find(t => t.wordGroup);
+      if (splitWord) {
+        const group = splitWord.wordGroup;
+        const fragments = tokens.filter(t => t.wordGroup === group).map(t => t.text);
+        showInsight('split',
+          `Notice how "${group}" becomes ${fragments.length} tokens &mdash; ${fragments.map(f => '"' + f + '"').join(' and ')}. The AI processes these as separate pieces.`
+        );
+      }
+    }
+
+    if (hasNonAscii && tokenCount > 0) {
+      showInsight('nonascii',
+        'Non-English text often uses 2&ndash;4x more tokens for the same meaning. This means it costs more and fills the context window faster.'
+      );
+    }
+
+    if (tokenCount > 10 && !shownInsights.has('stats')) {
+      showInsight('stats',
+        'A 10-page report is roughly 7,500 tokens. A large-context model can hold about 26 of those reports in a single conversation.'
+      );
+    }
+
+    if (tokenCount > 0 && ratio > 1.2 && !shownInsights.has('cost')) {
+      showInsight('cost',
+        'Every token costs money on API-priced tools. Writing a concise prompt isn\'t just clearer &mdash; it\'s cheaper.'
+      );
+    }
+
+    previousTokens = tokens;
+  }
+
+  // ── Debounced input ────────────────────────────────────
+  let debounceTimer;
+  textInput.addEventListener('input', () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(update, 150);
+  });
+
+  // ── Keyboard: Enter on examples, Escape to close menu ─
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      examplesMenu.classList.remove('open');
+      examplesBtn.setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  // ── Initial render ─────────────────────────────────────
+  update();
+
+})();
+</script>
+</body>
+</html>

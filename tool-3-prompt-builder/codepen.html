@@ -1,0 +1,73 @@
+<div class="container">
+  <div class="header"><h1>Prompt Structure Builder</h1></div>
+  <div class="header-line"></div>
+
+  <div class="card explainer" id="explainer" tabindex="0" role="button" aria-expanded="true">
+    <div class="explainer-toggle"><span>How this works</span><span class="chevron">&#9660;</span></div>
+    <div class="explainer-text">A vague prompt gets a vague answer. This tool helps you build structured prompts using four parts: Context, Task, Format, and Constraints.</div>
+  </div>
+
+  <div class="two-col">
+    <!-- Left: Build -->
+    <div class="card">
+      <div class="section-label">Build your prompt</div>
+      <div class="field-group">
+        <div class="field-label"><span class="field-num">1</span><span class="field-name">Context</span></div>
+        <div class="field-desc">Who are you? Who is this for?</div>
+        <textarea class="field-input" id="fContext" placeholder="e.g. I am a marketing manager"></textarea>
+      </div>
+      <div class="field-group">
+        <div class="field-label"><span class="field-num">2</span><span class="field-name">Task</span></div>
+        <div class="field-desc">What do you need?</div>
+        <textarea class="field-input" id="fTask" placeholder="e.g. Draft a 150-word email announcing a deadline change"></textarea>
+      </div>
+      <div class="field-group">
+        <div class="field-label"><span class="field-num">3</span><span class="field-name">Format</span></div>
+        <div class="field-desc">How should it look?</div>
+        <textarea class="field-input" id="fFormat" placeholder="e.g. Bullet points, under 150 words"></textarea>
+      </div>
+      <div class="field-group">
+        <div class="field-label"><span class="field-num">4</span><span class="field-name">Constraints</span></div>
+        <div class="field-desc">What to include, avoid, or emphasise?</div>
+        <textarea class="field-input" id="fConstraints" placeholder="e.g. Tone: direct but reassuring. Mention extra time for user testing."></textarea>
+      </div>
+    </div>
+
+    <!-- Right: Preview -->
+    <div class="card">
+      <div class="section-label">Live preview</div>
+      <div class="preview-text empty" id="preview">Start typing to build your prompt...</div>
+      <div class="completeness-wrap">
+        <div class="completeness-bar-track"><div class="completeness-bar" id="cBar" style="width:0%;background:#888"></div></div>
+        <div class="completeness-checks" id="checks">
+          <div class="check-item" data-field="fContext"><span class="check-icon">&#9675;</span> Context</div>
+          <div class="check-item" data-field="fTask"><span class="check-icon">&#9675;</span> Task</div>
+          <div class="check-item" data-field="fFormat"><span class="check-icon">&#9675;</span> Format</div>
+          <div class="check-item" data-field="fConstraints"><span class="check-icon">&#9675;</span> Constraints</div>
+        </div>
+        <div class="completeness-msg" id="cMsg">Start by telling the AI who you are</div>
+      </div>
+      <button class="copy-btn" id="copyBtn" disabled>Copy prompt</button>
+    </div>
+  </div>
+
+  <!-- Before / After -->
+  <div class="card before-after">
+    <div class="ba-label">Before / After</div>
+    <div class="ba-bad">&#10007; "Write me an email about the project."</div>
+    <div class="ba-arrow">&#8595;</div>
+    <div class="ba-good" id="baGood">&#10003; Your assembled prompt will appear here</div>
+  </div>
+
+  <!-- Insight -->
+  <div class="insight" id="insight" role="status" aria-live="polite"><span>&#128161; </span><span id="insightText"></span></div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <div class="dropdown-wrap">
+      <button class="dropdown-btn" id="dropdownBtn" aria-haspopup="true" aria-expanded="false">Load example <span>&#9662;</span></button>
+      <div class="dropdown-menu" id="dropdownMenu" role="menu"></div>
+    </div>
+    <button class="reset-btn" id="resetBtn">Reset &#8634;</button>
+  </div>
+</div>

@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!--
+ATTRIBUTION:
+
+"Context Window Demo" by Victor Osondu
+
+Licensed under CC BY 4.0
+https://creativecommons.org/licenses/by/4.0/
+
+To attribute this work, please include the above text and link.
+-->
+<title>Context Window Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="license" href="https://creativecommons.org/licenses/by/4.0/" />
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#1a1a2e;--bg-nav:#16213e;--surface:rgba(255,255,255,0.05);--border:rgba(255,255,255,0.1);--accent:#6366f1;--accent-glow:rgba(99,102,241,0.3);--amber:#f0a500;--red:#ef4444;--text:#e8e8e8;--heading:#fff;--muted:#888;--radius:16px;--font:"Inter",system-ui,sans-serif;--mono:"JetBrains Mono","Fira Code",monospace}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+body{font-family:var(--font);background:radial-gradient(ellipse at 50% 30%,var(--bg-nav),var(--bg) 70%);color:var(--text);min-height:100vh;display:flex;justify-content:center;padding:32px 16px;line-height:1.6}
+.container{width:100%;max-width:720px}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.header h1{font-size:1.35rem;font-weight:700;color:var(--heading)}
+.header .brand{font-size:.9rem;font-weight:500;color:var(--muted);letter-spacing:.5px}
+.header-line{height:2px;background:linear-gradient(90deg,var(--accent),transparent);margin-bottom:28px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;margin-bottom:20px;backdrop-filter:blur(12px)}
+.explainer{cursor:pointer}
+.explainer-toggle{display:flex;justify-content:space-between;align-items:center;font-size:.8rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;user-select:none}
+.explainer-toggle .chevron{transition:transform .2s ease-out;font-size:.7rem}
+.explainer.collapsed .chevron{transform:rotate(-90deg)}
+.explainer.collapsed .explainer-text{display:none}
+.explainer-text{font-size:.95rem;color:var(--text);line-height:1.65}
+
+.model-row{display:flex;align-items:center;gap:16px;margin-bottom:6px;flex-wrap:wrap}
+.model-row label{font-size:.85rem;color:var(--muted)}
+.model-select{background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--font);font-size:.85rem;padding:6px 12px;border-radius:8px;cursor:pointer}
+.model-select:focus{outline:none;border-color:var(--accent)}
+.model-info{font-size:.78rem;color:var(--muted)}
+.scale-note{font-size:.75rem;color:var(--muted);font-style:italic;margin-bottom:16px}
+
+.chat-area{max-height:420px;overflow-y:auto;padding:4px 0;scroll-behavior:smooth}
+.msg{display:flex;gap:10px;margin-bottom:14px;transition:opacity .8s ease-out,filter .4s ease-out}
+.msg.faded{opacity:.25;filter:blur(2px)}
+.msg.fading{opacity:.5}
+.msg-avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;flex-shrink:0;margin-top:2px}
+.msg-avatar.user{background:rgba(99,102,241,.2);color:var(--accent)}
+.msg-avatar.ai{background:rgba(160,100,220,.2);color:#c4b5fd}
+.msg-bubble{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:12px;padding:10px 16px;max-width:85%;font-size:.88rem;line-height:1.55}
+.msg.user-msg .msg-bubble{border-color:rgba(99,102,241,.15)}
+.msg.ai-msg .msg-bubble{border-color:rgba(160,100,220,.15)}
+.msg-sender{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
+.msg.user-msg .msg-sender{color:var(--accent)}
+.msg.ai-msg .msg-sender{color:#c4b5fd}
+
+.window-edge{border-top:2px dashed var(--amber);position:relative;margin:10px 0;transition:opacity .5s}
+.window-edge-label{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--bg);padding:0 10px;font-size:.7rem;color:var(--amber);text-transform:uppercase;letter-spacing:1px;white-space:nowrap}
+
+.usage-card .section-label{font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+.usage-bar{display:flex;height:18px;border-radius:9px;overflow:hidden;background:rgba(255,255,255,.06);margin-bottom:6px}
+.usage-lost{background:rgba(239,68,68,.4);transition:width .4s ease-out}
+.usage-visible{background:var(--accent);transition:width .4s ease-out}
+.usage-free{flex:1}
+.usage-labels{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted)}
+.usage-legend{display:flex;gap:16px;font-size:.72rem;color:var(--muted);margin-top:4px}
+.legend-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:middle}
+
+.insight{border-left:3px solid var(--accent);border-radius:0 12px 12px 0;padding:14px 20px;background:rgba(99,102,241,.05);font-size:.9rem;line-height:1.6;color:var(--text);opacity:0;transform:translateY(12px);transition:opacity .4s ease-out,transform .4s ease-out;margin-bottom:20px}
+.insight.visible{opacity:1;transform:translateY(0)}
+
+.controls{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.btn{background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--font);font-size:.85rem;padding:8px 16px;border-radius:10px;cursor:pointer;transition:border-color .2s;display:flex;align-items:center;gap:6px}
+.btn:hover{border-color:var(--accent)}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.primary{background:var(--accent);color:var(--bg);border-color:var(--accent);font-weight:600}
+.btn.primary:hover{opacity:.9}
+.reset-btn{background:transparent;border:1px solid var(--border);color:var(--muted);font-family:var(--font);font-size:.85rem;padding:8px 16px;border-radius:10px;cursor:pointer;transition:border-color .2s,color .2s;display:flex;align-items:center;gap:6px}
+.reset-btn:hover{border-color:var(--accent);color:var(--text)}
+
+.license-info{font-size:0.8rem;padding:20px;text-align:center;color:#666}
+
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header"><h2>Context Window Demo</h2></div>
+  <div class="header-line"></div>
+
+  <div class="card explainer" id="explainer" tabindex="0" role="button" aria-expanded="true">
+    <div class="explainer-toggle"><span>How this works</span><span class="chevron">&#9660;</span></div>
+    <div class="explainer-text">AI can only "see" a limited amount of text at once — its context window. When the window is full, the earliest information fades away. This is why long conversations lose context.<br><br><em style="font-size:0.82rem;color:var(--muted);">Note: this is a simplified illustration for educational purposes. Token counts are approximated, not accurately calculated.</em></div>
+  </div>
+
+  <div class="model-row">
+    <label>Model:</label>
+    <select class="model-select" id="modelSelect">
+      <option value="10">Small model (4K tokens)</option>
+      <option value="16">Medium model (128K tokens)</option>
+      <option value="20" selected>Large model (200K tokens)</option>
+    </select>
+    <span class="model-info">Window: <strong id="windowSize">20</strong> tokens</span>
+  </div>
+  <div class="scale-note">(Scaled down to demonstrate — real windows are thousands of times larger)</div>
+
+  <div class="card">
+    <div class="chat-area" id="chatArea"></div>
+  </div>
+
+  <div class="card usage-card">
+    <div class="section-label">Window usage</div>
+    <div class="usage-bar"><div class="usage-lost" id="usageLost" style="width:0%"></div><div class="usage-visible" id="usageVisible" style="width:0%"></div><div class="usage-free"></div></div>
+    <div class="usage-labels"><span id="usageText">0 / 20 tokens</span><span id="usageFree">20 free</span></div>
+    <div class="usage-legend">
+      <span><span class="legend-dot" style="background:rgba(239,68,68,.6)"></span>Lost</span>
+      <span><span class="legend-dot" style="background:var(--accent)"></span>Visible to AI</span>
+      <span><span class="legend-dot" style="background:rgba(255,255,255,.1)"></span>Free</span>
+    </div>
+  </div>
+
+  <div class="insight" id="insight" role="status" aria-live="polite"><span>&#128161; </span><span id="insightText"></span></div>
+
+  <div class="controls">
+    <button class="btn primary" id="autoBtn">Auto-play conversation &#9654;</button>
+    <button class="reset-btn" id="resetBtn">Reset &#8634;</button>
+  </div>
+
+
+  <footer class="license-info">
+    This work is licensed under
+    <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="license noopener noreferrer">CC BY 4.0</a>.
+  </footer>
+</div>
+
+<script>
+const SCRIPT = [
+  { role: 'user', text: 'My name is John and I manage a marketing team. We need help improving our content workflow.', tokens: 4 },
+  { role: 'ai', text: "Nice to meet you, John! Tell me more about what you'd like help with.", tokens: 3 },
+  { role: 'user', text: 'I need to write a blog post about prompt engineering for non-technical professionals.', tokens: 3 },
+  { role: 'ai', text: "Great topic! Here are some angles we could explore: the gap between vague prompts and structured ones, common mistakes, practical frameworks...", tokens: 5 },
+  { role: 'user', text: 'I like the frameworks angle. My audience is mainly marketers and educators.', tokens: 3 },
+  { role: 'ai', text: "Perfect. For marketers and educators, I'd suggest focusing on workflow-specific examples — things they'd actually do at their desks...", tokens: 5 },
+  { role: 'user', text: "This is really helpful. Can you remind me — what did I say my name was?", tokens: 3 },
+  { role: 'ai', text: "I'm sorry, I don't have that information in our current conversation. Could you remind me?", tokens: 3 }
+];
+
+let windowSize = 20;
+let messages = [];
+let totalTokens = 0;
+let autoPlaying = false;
+let autoTimeout = null;
+let scriptIndex = 0;
+let insightShown = { fade: false, gotcha: false, model: false, tip: false };
+
+const chatArea = document.getElementById('chatArea');
+const usageLost = document.getElementById('usageLost');
+const usageVisible = document.getElementById('usageVisible');
+const usageText = document.getElementById('usageText');
+const usageFree = document.getElementById('usageFree');
+const windowSizeEl = document.getElementById('windowSize');
+const modelSelect = document.getElementById('modelSelect');
+const autoBtn = document.getElementById('autoBtn');
+const resetBtn = document.getElementById('resetBtn');
+const insightEl = document.getElementById('insight');
+const insightTextEl = document.getElementById('insightText');
+const explainer = document.getElementById('explainer');
+
+function addMessage(role, text, tokens) {
+  messages.push({ role, text, tokens });
+  totalTokens += tokens;
+  renderChat();
+  chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+function renderChat() {
+  const lostTokens = Math.max(0, totalTokens - windowSize);
+  let accumulated = 0;
+
+  chatArea.innerHTML = '';
+  let windowEdgeInserted = false;
+
+  messages.forEach((m, i) => {
+    const msgEnd = accumulated + m.tokens;
+    const isLost = msgEnd <= lostTokens;
+    const isFading = !isLost && accumulated < lostTokens;
+
+    // Insert window edge
+    if (!windowEdgeInserted && !isLost && accumulated >= lostTokens) {
+      if (lostTokens > 0) {
+        const edge = document.createElement('div');
+        edge.className = 'window-edge';
+        edge.innerHTML = '<span class="window-edge-label">&#9473; window edge &#9473;</span>';
+        chatArea.appendChild(edge);
+      }
+      windowEdgeInserted = true;
+    }
+
+    const div = document.createElement('div');
+    div.className = 'msg ' + (m.role === 'user' ? 'user-msg' : 'ai-msg');
+    if (isLost) div.classList.add('faded');
+    else if (isFading) div.classList.add('fading');
+
+    div.innerHTML = '<div class="msg-avatar ' + m.role + '">' + (m.role === 'user' ? 'J' : 'AI') + '</div>' +
+      '<div class="msg-bubble"><div class="msg-sender">' + (m.role === 'user' ? 'You' : 'AI') + '</div>' + escapeHtml(m.text) + '</div>';
+    chatArea.appendChild(div);
+    accumulated = msgEnd;
+  });
+
+  // Usage bar
+  const visibleTokens = Math.min(totalTokens, windowSize);
+  const freeTokens = Math.max(0, windowSize - totalTokens);
+  const lostPct = (lostTokens / windowSize) * 100;
+  const visPct = (visibleTokens / windowSize) * 100;
+
+  usageLost.style.width = Math.min(lostPct, 100) + '%';
+  usageVisible.style.width = Math.min(visPct - lostPct, 100) + '%';
+  usageText.textContent = Math.min(totalTokens, windowSize) + ' / ' + windowSize + ' tokens';
+  usageFree.textContent = Math.max(freeTokens, 0) + ' free';
+
+  // Insights
+  if (lostTokens > 0 && !insightShown.fade) {
+    insightShown.fade = true;
+    showInsight("Messages are leaving the AI's memory. Everything above the dotted line is invisible to the model now.");
+  }
+  if (scriptIndex >= SCRIPT.length && !insightShown.gotcha) {
+    insightShown.gotcha = true;
+    showInsight("The AI \u2018forgot\u2019 the user's name \u2014 not because it made an error, but because that message slid out of the context window. This is why AI sometimes asks you to repeat things in long conversations.");
+  }
+}
+
+function typeMessage(role, text, tokens, callback) {
+  const m = { role, text: '', tokens };
+  messages.push(m);
+  let i = 0;
+  function tick() {
+    if (i <= text.length) {
+      m.text = text.slice(0, i);
+      renderChat();
+      chatArea.scrollTop = chatArea.scrollHeight;
+      i++;
+      setTimeout(tick, 20);
+    } else {
+      totalTokens += tokens;
+      renderChat();
+      if (callback) callback();
+    }
+  }
+  tick();
+}
+
+function autoPlay() {
+  if (scriptIndex >= SCRIPT.length) {
+    autoPlaying = false;
+    autoBtn.textContent = 'Auto-play conversation \u25B6';
+    autoBtn.disabled = true;
+    return;
+  }
+  const s = SCRIPT[scriptIndex];
+  scriptIndex++;
+  typeMessage(s.role, s.text, s.tokens, () => {
+    autoTimeout = setTimeout(autoPlay, 1500);
+  });
+}
+
+autoBtn.addEventListener('click', () => {
+  if (autoPlaying) {
+    autoPlaying = false;
+    clearTimeout(autoTimeout);
+    autoBtn.textContent = 'Auto-play conversation \u25B6';
+  } else {
+    autoPlaying = true;
+    autoBtn.textContent = 'Pause \u23F8';
+    autoPlay();
+  }
+});
+
+modelSelect.addEventListener('change', () => {
+  windowSize = parseInt(modelSelect.value);
+  windowSizeEl.textContent = windowSize;
+  if (!insightShown.model) {
+    insightShown.model = true;
+    showInsight("A bigger context window means the AI can hold more of your conversation \u2014 but every model has a limit. For long documents, this is why you might need to break them into sections.");
+  }
+  renderChat();
+});
+
+function showInsight(text) {
+  insightTextEl.textContent = text;
+  insightEl.classList.remove('visible');
+  void insightEl.offsetWidth;
+  insightEl.classList.add('visible');
+}
+
+function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+explainer.addEventListener('click', () => { explainer.classList.toggle('collapsed'); });
+
+resetBtn.addEventListener('click', () => {
+  clearTimeout(autoTimeout);
+  autoPlaying = false;
+  autoBtn.textContent = 'Auto-play conversation \u25B6';
+  autoBtn.disabled = false;
+  messages = [];
+  totalTokens = 0;
+  scriptIndex = 0;
+  insightShown = { fade: false, gotcha: false, model: false, tip: false };
+  insightEl.classList.remove('visible');
+  renderChat();
+});
+
+renderChat();
+</script>
+</body>
+</html>

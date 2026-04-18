@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!--
+ATTRIBUTION:
+
+"Temperature Slider" by Victor Osondu
+
+Licensed under CC BY 4.0
+https://creativecommons.org/licenses/by/4.0/
+
+To attribute this work, please include the above text and link.
+-->
+<title>Temperature Slider</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="license" href="https://creativecommons.org/licenses/by/4.0/" />
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#1a1a2e;--bg-nav:#16213e;--surface:rgba(255,255,255,0.05);--border:rgba(255,255,255,0.1);--accent:#6366f1;--accent-glow:rgba(99,102,241,0.3);--amber:#f0a500;--text:#e8e8e8;--heading:#fff;--muted:#888;--radius:16px;--font:"Inter",system-ui,sans-serif;--mono:"JetBrains Mono","Fira Code",monospace}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+body{font-family:var(--font);background:radial-gradient(ellipse at 50% 30%,var(--bg-nav),var(--bg) 70%);color:var(--text);min-height:100vh;display:flex;justify-content:center;padding:32px 16px;line-height:1.6}
+.container{width:100%;max-width:720px}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.header h2{font-size:1.35rem;font-weight:700;color:var(--heading)}
+.header-line{height:2px;background:linear-gradient(90deg,var(--accent),transparent);margin-bottom:28px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;margin-bottom:20px;backdrop-filter:blur(12px)}
+.explainer{cursor:pointer}
+.explainer-toggle{display:flex;justify-content:space-between;align-items:center;font-size:.8rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;user-select:none}
+.explainer-toggle .chevron{transition:transform .2s ease-out;font-size:.7rem}
+.explainer.collapsed .chevron{transform:rotate(-90deg)}
+.explainer.collapsed .explainer-text{display:none}
+.explainer-text{font-size:.95rem;color:var(--text);line-height:1.65}
+
+.prompt-display{font-size:.9rem;color:var(--muted);margin-bottom:6px}
+.prompt-text{font-family:var(--mono);font-size:.92rem;color:var(--heading);line-height:1.5;margin-bottom:12px}
+
+.slider-wrap{padding:8px 0 16px}
+.slider-labels{display:flex;justify-content:space-between;font-size:.78rem;color:var(--muted);margin-bottom:8px}
+.slider-track{position:relative;height:8px;background:linear-gradient(90deg,#3b82f6,var(--accent),var(--amber),#f97316);border-radius:4px}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:8px;background:transparent;position:absolute;top:0;left:0;margin:0;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--heading);border:3px solid var(--accent);box-shadow:0 0 8px rgba(0,0,0,.4);cursor:grab;margin-top:-7px;transition:box-shadow .15s}
+input[type=range]::-webkit-slider-thumb:hover{box-shadow:0 0 12px var(--accent-glow)}
+input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--heading);border:3px solid var(--accent);box-shadow:0 0 8px rgba(0,0,0,.4);cursor:grab}
+.slider-info{display:flex;justify-content:center;gap:24px;margin-top:12px;font-size:.9rem}
+.slider-info .val{font-family:var(--mono);color:var(--heading);font-weight:600}
+.slider-info .mode{color:var(--accent)}
+
+.output-card{min-height:80px}
+.output-text{font-family:var(--mono);font-size:.95rem;color:var(--heading);line-height:1.65;transition:opacity .3s}
+
+.comparison{padding:12px 0}
+.comp-row{display:flex;align-items:flex-start;gap:14px;padding:10px 16px;border-radius:10px;cursor:pointer;transition:background .2s,border-color .2s;border:1px solid transparent;margin-bottom:6px}
+.comp-row:hover{background:rgba(255,255,255,.03)}
+.comp-row.active{border-color:var(--accent);background:rgba(99,102,241,.06)}
+.comp-temp{font-family:var(--mono);font-size:.85rem;color:var(--muted);min-width:32px;padding-top:2px}
+.comp-bar{width:6px;min-height:32px;border-radius:3px;flex-shrink:0;margin-top:2px}
+.comp-text{font-size:.85rem;color:var(--text);line-height:1.5;flex:1}
+
+.guidance-card .section-label{font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+.guide-row{display:flex;align-items:center;gap:12px;padding:6px 12px;border-radius:8px;font-size:.85rem;margin-bottom:4px;transition:background .2s}
+.guide-row.active{background:rgba(99,102,241,.08)}
+.guide-range{font-family:var(--mono);color:var(--muted);min-width:60px}
+.guide-use{color:var(--text)}
+
+.insight{border-left:3px solid var(--accent);border-radius:0 12px 12px 0;padding:14px 20px;background:rgba(99,102,241,.05);font-size:.9rem;line-height:1.6;color:var(--text);opacity:0;transform:translateY(12px);transition:opacity .4s ease-out,transform .4s ease-out;margin-bottom:20px}
+.insight.visible{opacity:1;transform:translateY(0)}
+
+.controls{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.dropdown-wrap{position:relative}
+.dropdown-btn{background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--font);font-size:.85rem;padding:8px 16px;border-radius:10px;cursor:pointer;transition:border-color .2s;display:flex;align-items:center;gap:6px}
+.dropdown-btn:hover{border-color:var(--accent)}
+.dropdown-menu{position:absolute;bottom:calc(100% + 6px);left:0;background:#1e1e36;border:1px solid var(--border);border-radius:12px;padding:6px;min-width:360px;display:none;z-index:10;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+.dropdown-menu.open{display:block}
+.dropdown-item{padding:10px 14px;border-radius:8px;cursor:pointer;font-size:.82rem;color:var(--text);transition:background .15s;font-family:var(--mono)}
+.dropdown-item:hover{background:rgba(99,102,241,.1)}
+.dropdown-item.active{color:var(--accent)}
+.reset-btn{background:transparent;border:1px solid var(--border);color:var(--muted);font-family:var(--font);font-size:.85rem;padding:8px 16px;border-radius:10px;cursor:pointer;transition:border-color .2s,color .2s;display:flex;align-items:center;gap:6px}
+.reset-btn:hover{border-color:var(--accent);color:var(--text)}
+
+.license-info{font-size:0.8rem;padding:20px;text-align:center;color:#666}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header"><h2>Temperature Slider</h2></div>
+  <div class="header-line"></div>
+
+  <div class="card explainer" id="explainer" tabindex="0" role="button" aria-expanded="true">
+    <div class="explainer-toggle"><span>How this works</span><span class="chevron">&#9660;</span></div>
+    <div class="explainer-text">"Temperature" controls how predictable or creative the AI's output is. Low = safe and consistent. High = surprising and varied.</div>
+  </div>
+
+  <div class="prompt-display">Prompt:</div>
+  <div class="prompt-text" id="promptText"></div>
+
+  <div class="controls" style="margin-bottom:20px">
+    <div class="dropdown-wrap">
+      <button class="dropdown-btn" id="promptBtn" aria-haspopup="true" aria-expanded="false">Change prompt <span>&#9662;</span></button>
+      <div class="dropdown-menu" id="promptMenu" role="menu"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="slider-wrap">
+      <div class="slider-labels"><span>Predictable</span><span>Creative</span></div>
+      <div class="slider-track"><input type="range" id="tempSlider" min="0" max="100" value="50" step="1" aria-label="Temperature"></div>
+      <div class="slider-info"><span>Temperature: <span class="val" id="tempVal">0.5</span></span><span>Mode: <span class="mode" id="modeLabel">Balanced</span></span></div>
+    </div>
+  </div>
+
+  <div class="card output-card">
+    <div style="font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">AI output at this temperature</div>
+    <div class="output-text" id="mainOutput"></div>
+  </div>
+
+  <div class="card comparison">
+    <div style="font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">All temperatures at a glance</div>
+    <div id="compStrip"></div>
+  </div>
+
+  <div class="card guidance-card">
+    <div class="section-label">When to use each range</div>
+    <div class="guide-row" data-lo="0" data-hi="30"><span class="guide-range">0.0–0.3</span><span class="guide-use">Factual writing, reports, emails</span></div>
+    <div class="guide-row" data-lo="31" data-hi="60"><span class="guide-range">0.4–0.6</span><span class="guide-use">Balanced — summaries, blog posts</span></div>
+    <div class="guide-row" data-lo="61" data-hi="100"><span class="guide-range">0.7–1.0</span><span class="guide-use">Brainstorming, creative writing</span></div>
+  </div>
+
+  <div class="insight" id="insight" role="status" aria-live="polite"><span>&#128161; </span><span id="insightText"></span></div>
+
+  <div class="controls">
+    <div></div>
+    <button class="reset-btn" id="resetBtn">Reset &#8634;</button>
+  </div>
+
+  <footer class="license-info">
+    This work is licensed under
+    <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="license noopener noreferrer">CC BY 4.0</a>.
+  </footer>
+</div>
+
+<script>
+const PROMPTS = [
+  {
+    text: "Write an opening line for a company blog post about remote work",
+    outputs: {
+      0: { text: "Remote work has changed how companies operate across the globe.", label: "Deterministic" },
+      30: { text: "Remote work is no longer a perk \u2014 it's a baseline expectation.", label: "Conservative" },
+      50: { text: "The 9-to-5 didn't end \u2014 it moved to the spare bedroom.", label: "Balanced" },
+      70: { text: "The office didn't disappear \u2014 it just learned to follow us home, and not everyone is glad it knows the address.", label: "Creative" },
+      100: { text: "Somewhere between pyjama bottoms and a Zoom call, we accidentally reinvented the workplace.", label: "Experimental" }
+    }
+  },
+  {
+    text: "Describe what a project manager does in one sentence",
+    outputs: {
+      0: { text: "A project manager plans, coordinates, and oversees projects to ensure they are completed on time and within budget.", label: "Deterministic" },
+      30: { text: "A project manager keeps teams aligned, timelines on track, and stakeholders informed throughout the life of a project.", label: "Conservative" },
+      50: { text: "Project managers are professional plate-spinners \u2014 they keep everything moving without letting anything crash.", label: "Balanced" },
+      70: { text: "A project manager is the person who turns a room full of good intentions into a shipped product with a deadline.", label: "Creative" },
+      100: { text: "Imagine a translator who speaks fluent engineer, designer, and executive \u2014 then add a stopwatch and a spreadsheet.", label: "Experimental" }
+    }
+  },
+  {
+    text: "Suggest a name for a new coffee shop",
+    outputs: {
+      0: { text: "The Daily Brew", label: "Deterministic" },
+      30: { text: "Common Grounds", label: "Conservative" },
+      50: { text: "Steep & Stir", label: "Balanced" },
+      70: { text: "Pour Decisions", label: "Creative" },
+      100: { text: "Caf\u00e9 Existential \u2014 where every cup is a question and the answer is always \u2018another one\u2019.", label: "Experimental" }
+    }
+  },
+  {
+    text: "Explain why deadlines matter to a colleague",
+    outputs: {
+      0: { text: "Deadlines ensure that work is completed on schedule and that all team members can plan their tasks accordingly.", label: "Deterministic" },
+      30: { text: "Deadlines exist because without them, work expands to fill whatever time is available \u2014 Parkinson's Law in action.", label: "Conservative" },
+      50: { text: "Deadlines are less about pressure and more about coordination \u2014 when you miss one, someone else's plan breaks.", label: "Balanced" },
+      70: { text: "A deadline is a promise to your future self and your teammates that this thing will actually ship, not just \u2018get worked on\u2019.", label: "Creative" },
+      100: { text: "Deadlines are the gravity of the working world. Without them, everything just floats around looking busy.", label: "Experimental" }
+    }
+  },
+  {
+    text: "Write a subject line for a marketing email about a summer sale",
+    outputs: {
+      0: { text: "Summer Sale: Up to 30% Off Selected Items", label: "Deterministic" },
+      30: { text: "Our biggest summer sale starts today \u2014 don't miss it", label: "Conservative" },
+      50: { text: "Hot deals, cool prices \u2014 summer savings are here", label: "Balanced" },
+      70: { text: "Your wardrobe called. It said bring sunscreen and a bigger bag.", label: "Creative" },
+      100: { text: "We put the prices in a cold plunge. They came out refreshed.", label: "Experimental" }
+    }
+  }
+];
+
+const TEMP_STOPS = [0, 30, 50, 70, 100];
+const BAR_COLORS = ['#3b82f6', '#06b6d4', '#6366f1', '#f0a500', '#f97316'];
+
+let currentPrompt = 0;
+let insightShown = { low: false, high: false, switch: false };
+
+const tempSlider = document.getElementById('tempSlider');
+const tempVal = document.getElementById('tempVal');
+const modeLabel = document.getElementById('modeLabel');
+const mainOutput = document.getElementById('mainOutput');
+const compStrip = document.getElementById('compStrip');
+const promptText = document.getElementById('promptText');
+const promptBtn = document.getElementById('promptBtn');
+const promptMenu = document.getElementById('promptMenu');
+const insightEl = document.getElementById('insight');
+const insightText = document.getElementById('insightText');
+const resetBtn = document.getElementById('resetBtn');
+const explainer = document.getElementById('explainer');
+const guideRows = document.querySelectorAll('.guide-row');
+
+function getMode(v) {
+  if (v <= 20) return 'Deterministic';
+  if (v <= 40) return 'Conservative';
+  if (v <= 60) return 'Balanced';
+  if (v <= 80) return 'Creative';
+  return 'Experimental';
+}
+
+function nearestStop(v) {
+  let best = 0, bestDist = 999;
+  for (const s of TEMP_STOPS) { const d = Math.abs(v - s); if (d < bestDist) { bestDist = d; best = s; } }
+  return best;
+}
+
+function render() {
+  const v = parseInt(tempSlider.value);
+  tempVal.textContent = (v / 100).toFixed(1);
+  modeLabel.textContent = getMode(v);
+  promptText.textContent = '"' + PROMPTS[currentPrompt].text + '"';
+
+  const stop = nearestStop(v);
+  const output = PROMPTS[currentPrompt].outputs[stop];
+  mainOutput.style.opacity = 0;
+  setTimeout(() => { mainOutput.textContent = '"' + output.text + '"'; mainOutput.style.opacity = 1; }, 150);
+
+  // Comparison strip
+  compStrip.innerHTML = '';
+  TEMP_STOPS.forEach((s, i) => {
+    const o = PROMPTS[currentPrompt].outputs[s];
+    const row = document.createElement('div');
+    row.className = 'comp-row' + (s === stop ? ' active' : '');
+    row.innerHTML = '<span class="comp-temp">' + (s / 100).toFixed(1) + '</span><div class="comp-bar" style="background:' + BAR_COLORS[i] + '"></div><div class="comp-text">"' + o.text + '"</div>';
+    row.addEventListener('click', () => { tempSlider.value = s; render(); });
+    compStrip.appendChild(row);
+  });
+
+  // Guidance highlight
+  guideRows.forEach(r => {
+    const lo = parseInt(r.dataset.lo), hi = parseInt(r.dataset.hi);
+    r.classList.toggle('active', v >= lo && v <= hi);
+  });
+
+  // Insights
+  if (v <= 10 && !insightShown.low) {
+    insightShown.low = true;
+    showInsight("At zero temperature, the AI always picks the safest, most probable words. Useful for factual tasks \u2014 but the output can feel generic.");
+  }
+  if (v >= 90 && !insightShown.high) {
+    insightShown.high = true;
+    showInsight("At high temperature, the AI takes creative risks. Great for brainstorming \u2014 but you might need to rein it in for professional writing.");
+  }
+}
+
+function showInsight(text) {
+  insightText.textContent = text;
+  insightEl.classList.remove('visible');
+  void insightEl.offsetWidth;
+  insightEl.classList.add('visible');
+}
+
+tempSlider.addEventListener('input', render);
+
+// Prompt dropdown
+PROMPTS.forEach((p, i) => {
+  const item = document.createElement('div');
+  item.className = 'dropdown-item' + (i === currentPrompt ? ' active' : '');
+  item.textContent = '"' + p.text + '"';
+  item.addEventListener('click', () => {
+    currentPrompt = i;
+    closePromptMenu();
+    if (!insightShown.switch) { insightShown.switch = true; showInsight("Notice how temperature matters more for some tasks than others. A factual description doesn't need creativity. A shop name does."); }
+    render();
+  });
+  promptMenu.appendChild(item);
+});
+promptBtn.addEventListener('click', (e) => { e.stopPropagation(); promptMenu.classList.toggle('open'); });
+document.addEventListener('click', closePromptMenu);
+function closePromptMenu() { promptMenu.classList.remove('open'); }
+
+explainer.addEventListener('click', () => { explainer.classList.toggle('collapsed'); });
+resetBtn.addEventListener('click', () => { tempSlider.value = 50; currentPrompt = 0; insightShown = { low: false, high: false, switch: false }; insightEl.classList.remove('visible'); render(); });
+
+render();
+</script>
+</body>
+</html>

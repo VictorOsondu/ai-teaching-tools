@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!--
+ATTRIBUTION:
+
+"Prompt Structure Builder" by Victor Osondu
+
+Licensed under CC BY 4.0
+https://creativecommons.org/licenses/by/4.0/
+
+To attribute this work, please include the above text and link.
+-->
+<title>Prompt Structure Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="license" href="https://creativecommons.org/licenses/by/4.0/" />
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#1a1a2e;--bg-nav:#16213e;--surface:rgba(255,255,255,0.05);--border:rgba(255,255,255,0.1);--accent:#6366f1;--accent-glow:rgba(99,102,241,0.3);--amber:#f0a500;--text:#e8e8e8;--heading:#fff;--muted:#888;--radius:16px;--font:"Inter",system-ui,sans-serif;--mono:"JetBrains Mono","Fira Code",monospace}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+body{font-family:var(--font);background:radial-gradient(ellipse at 50% 30%,var(--bg-nav),var(--bg) 70%);color:var(--text);min-height:100vh;display:flex;justify-content:center;padding:32px 16px;line-height:1.6}
+.container{width:100%;max-width:720px}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.header h2{font-size:1.35rem;font-weight:700;color:var(--heading)}
+.header-line{height:2px;background:linear-gradient(90deg,var(--accent),transparent);margin-bottom:28px;border-radius:1px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;margin-bottom:20px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.explainer{cursor:pointer}
+.explainer-toggle{display:flex;justify-content:space-between;align-items:center;font-size:.8rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;user-select:none}
+.explainer-toggle .chevron{transition:transform .2s ease-out;font-size:.7rem}
+.explainer.collapsed .chevron{transform:rotate(-90deg)}
+.explainer.collapsed .explainer-text{display:none}
+.explainer-text{font-size:.95rem;color:var(--text);line-height:1.65}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:600px){.two-col{grid-template-columns:1fr}}
+.section-label{font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.field-group{margin-bottom:18px}
+.field-label{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.field-num{width:22px;height:22px;border-radius:50%;background:var(--accent);color:var(--bg);font-size:.7rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.field-name{font-size:.9rem;font-weight:600;color:var(--heading)}
+.field-desc{font-size:.78rem;color:var(--muted);margin-bottom:6px;margin-left:30px}
+.field-input{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--font);font-size:.88rem;padding:10px 14px;resize:vertical;min-height:56px;line-height:1.5;transition:border-color .2s;outline:none}
+.field-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+.field-input::placeholder{color:rgba(255,255,255,.2)}
+.preview-text{font-family:var(--mono);font-size:.88rem;line-height:1.7;color:var(--text);min-height:120px;white-space:pre-wrap;word-break:break-word;transition:opacity .15s}
+.preview-text.empty{color:var(--muted);font-family:var(--font);font-style:italic}
+.completeness-wrap{margin-top:16px}
+.completeness-bar-track{height:8px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden;margin-bottom:8px}
+.completeness-bar{height:100%;border-radius:4px;transition:width .4s ease-out,background .4s}
+.completeness-checks{display:flex;flex-direction:column;gap:4px}
+.check-item{display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--muted)}
+.check-icon{font-size:.9rem;transition:transform .2s}
+.check-item.done{color:var(--accent)}
+.check-item.done .check-icon{transform:scale(1.2)}
+.completeness-msg{font-size:.82rem;color:var(--muted);margin-top:8px;font-style:italic}
+.copy-btn{display:block;width:100%;margin-top:16px;background:var(--accent);color:var(--bg);border:none;border-radius:10px;padding:10px;font-family:var(--font);font-size:.9rem;font-weight:600;cursor:pointer;transition:opacity .2s}
+.copy-btn:hover{opacity:.85}
+.copy-btn:disabled{opacity:.4;cursor:default}
+.copy-btn.copied{background:var(--heading);color:var(--bg)}
+.before-after{margin-top:4px}
+.ba-label{font-size:.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.ba-bad{color:rgba(255,100,100,.7);font-family:var(--mono);font-size:.85rem;margin-bottom:10px;text-decoration:line-through;text-decoration-color:rgba(255,100,100,.3)}
+.ba-arrow{color:var(--muted);margin-bottom:10px;font-size:.85rem}
+.ba-good{color:var(--accent);font-family:var(--mono);font-size:.85rem;line-height:1.5;padding:10px 14px;border-radius:10px;background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.15);transition:box-shadow .4s}
+.ba-good.pulse{box-shadow:0 0 16px var(--accent-glow)}
+.insight{border-left:3px solid var(--accent);border-radius:0 12px 12px 0;padding:14px 20px;background:rgba(99,102,241,.05);font-size:.9rem;line-height:1.6;color:var(--text);opacity:0;transform:translateY(12px);transition:opacity .4s ease-out,transform .4s ease-out;margin-bottom:20px}
+.insight.visible{opacity:1;transform:translateY(0)}
+.controls{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.dropdown-wrap{position:relative}
+.dropdown-btn{background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--font);font-size:.85rem;padding:8px 16px;border-radius:10px;cursor:pointer;transition:border-color .2s;display:flex;align-items:center;gap:6px}
+.dropdown-btn:hover{border-color:var(--accent)}
+.dropdown-menu{position:absolute;bottom:calc(100% + 6px);left:0;background:#1e1e36;border:1px solid var(--border);border-radius:12px;padding:6px;min-width:280px;display:none;z-index:10;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+.dropdown-menu.open{display:block}
+.dropdown-item{padding:10px 14px;border-radius:8px;cursor:pointer;font-size:.85rem;color:var(--text);transition:background .15s}
+.dropdown-item:hover{background:rgba(99,102,241,.1)}
+.reset-btn{background:transparent;border:1px solid var(--border);color:var(--muted);font-family:var(--font);font-size:.85rem;padding:8px 16px;border-radius:10px;cursor:pointer;transition:border-color .2s,color .2s;display:flex;align-items:center;gap:6px}
+.reset-btn:hover{border-color:var(--accent);color:var(--text)}
+.license-info{font-size:0.8rem;padding:20px;text-align:center;color:#666}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header"><h2>Prompt Structure Builder</h2></div>
+  <div class="header-line"></div>
+
+  <div class="card explainer" id="explainer" tabindex="0" role="button" aria-expanded="true">
+    <div class="explainer-toggle"><span>How this works</span><span class="chevron">&#9660;</span></div>
+    <div class="explainer-text">A vague prompt gets a vague answer. This tool helps you build structured prompts using four parts: Context, Task, Format, and Constraints.</div>
+  </div>
+
+  <div class="two-col">
+    <!-- Left: Build -->
+    <div class="card">
+      <div class="section-label">Build your prompt</div>
+      <div class="field-group">
+        <div class="field-label"><span class="field-num">1</span><span class="field-name">Context</span></div>
+        <div class="field-desc">Who are you? Who is this for?</div>
+        <textarea class="field-input" id="fContext" placeholder="e.g. I am a marketing manager"></textarea>
+      </div>
+      <div class="field-group">
+        <div class="field-label"><span class="field-num">2</span><span class="field-name">Task</span></div>
+        <div class="field-desc">What do you need?</div>
+        <textarea class="field-input" id="fTask" placeholder="e.g. Draft a 150-word email announcing a deadline change"></textarea>
+      </div>
+      <div class="field-group">
+        <div class="field-label"><span class="field-num">3</span><span class="field-name">Format</span></div>
+        <div class="field-desc">How should it look?</div>
+        <textarea class="field-input" id="fFormat" placeholder="e.g. Bullet points, under 150 words"></textarea>
+      </div>
+      <div class="field-group">
+        <div class="field-label"><span class="field-num">4</span><span class="field-name">Constraints</span></div>
+        <div class="field-desc">What to include, avoid, or emphasise?</div>
+        <textarea class="field-input" id="fConstraints" placeholder="e.g. Tone: direct but reassuring. Mention extra time for user testing."></textarea>
+      </div>
+    </div>
+
+    <!-- Right: Preview -->
+    <div class="card">
+      <div class="section-label">Live preview</div>
+      <div class="preview-text empty" id="preview">Start typing to build your prompt...</div>
+      <div class="completeness-wrap">
+        <div class="completeness-bar-track"><div class="completeness-bar" id="cBar" style="width:0%;background:#888"></div></div>
+        <div class="completeness-checks" id="checks">
+          <div class="check-item" data-field="fContext"><span class="check-icon">&#9675;</span> Context</div>
+          <div class="check-item" data-field="fTask"><span class="check-icon">&#9675;</span> Task</div>
+          <div class="check-item" data-field="fFormat"><span class="check-icon">&#9675;</span> Format</div>
+          <div class="check-item" data-field="fConstraints"><span class="check-icon">&#9675;</span> Constraints</div>
+        </div>
+        <div class="completeness-msg" id="cMsg">Start by telling the AI who you are</div>
+      </div>
+      <button class="copy-btn" id="copyBtn" disabled>Copy prompt</button>
+    </div>
+  </div>
+
+  <!-- Before / After -->
+  <div class="card before-after">
+    <div class="ba-label">Before / After</div>
+    <div class="ba-bad">&#10007; "Write me an email about the project."</div>
+    <div class="ba-arrow">&#8595;</div>
+    <div class="ba-good" id="baGood">&#10003; Your assembled prompt will appear here</div>
+  </div>
+
+  <!-- Insight -->
+  <div class="insight" id="insight" role="status" aria-live="polite"><span>&#128161; </span><span id="insightText"></span></div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <div class="dropdown-wrap">
+      <button class="dropdown-btn" id="dropdownBtn" aria-haspopup="true" aria-expanded="false">Load example <span>&#9662;</span></button>
+      <div class="dropdown-menu" id="dropdownMenu" role="menu"></div>
+    </div>
+    <button class="reset-btn" id="resetBtn">Reset &#8634;</button>
+  </div>
+
+  <footer class="license-info">
+    This work is licensed under
+    <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="license noopener noreferrer">CC BY 4.0</a>.
+  </footer>
+</div>
+
+<script>
+const EXAMPLES = [
+  { name: "Email drafting", context: "I am a marketing manager at a mid-size tech company.", task: "Draft a 150-word email to my team announcing the project deadline has moved from 15 March to 1 April.", format: "Use bullet points for key information. Keep it under 150 words.", constraints: "Tone: direct but reassuring. Mention that the extra time allows us to finish user testing properly." },
+  { name: "Report summarising", context: "I am a senior analyst presenting to the executive board.", task: "Summarise this 20-page quarterly report into a one-page executive brief.", format: "Three sections: Key Results, Challenges, Recommendations. Use bullet points.", constraints: "Focus on numbers and outcomes. Avoid technical jargon. Highlight anything that changed versus last quarter." },
+  { name: "Meeting preparation", context: "I am a product manager about to join a stakeholder meeting.", task: "Create a meeting agenda and talking points for a 30-minute product review.", format: "Structured agenda with time allocations. 2-3 talking points per section.", constraints: "Focus on decisions that need to be made, not status updates. Include one slide recommendation per topic." },
+  { name: "Social media post", context: "I manage social media for a sustainable fashion brand targeting millennials.", task: "Write a LinkedIn post announcing our new recycled materials collection.", format: "Under 200 words. Include a hook in the first line. End with a call to action.", constraints: "Avoid greenwashing language. Be specific about the materials. Tone: authentic and enthusiastic, not salesy." },
+  { name: "Job description review", context: "I am a hiring manager recruiting for a senior engineering role.", task: "Review and improve this job description to attract more diverse candidates.", format: "Return the improved version with changes highlighted. Add a summary of what you changed and why.", constraints: "Remove unnecessarily gendered language. Focus on outcomes over years of experience. Keep technical requirements realistic." }
+];
+
+const fields = { fContext: document.getElementById('fContext'), fTask: document.getElementById('fTask'), fFormat: document.getElementById('fFormat'), fConstraints: document.getElementById('fConstraints') };
+const preview = document.getElementById('preview');
+const cBar = document.getElementById('cBar');
+const cMsg = document.getElementById('cMsg');
+const checks = document.querySelectorAll('.check-item');
+const copyBtn = document.getElementById('copyBtn');
+const baGood = document.getElementById('baGood');
+const insightEl = document.getElementById('insight');
+const insightText = document.getElementById('insightText');
+const dropdownBtn = document.getElementById('dropdownBtn');
+const dropdownMenu = document.getElementById('dropdownMenu');
+const resetBtn = document.getElementById('resetBtn');
+const explainer = document.getElementById('explainer');
+
+let insightShown = { first: false, complete: false };
+
+function assemble() {
+  const ctx = fields.fContext.value.trim();
+  const task = fields.fTask.value.trim();
+  const fmt = fields.fFormat.value.trim();
+  const con = fields.fConstraints.value.trim();
+  const parts = [];
+  if (ctx) parts.push(ctx.endsWith('.') ? ctx : ctx + '.');
+  if (task) parts.push(task.endsWith('.') ? task : task + '.');
+  if (fmt) parts.push(fmt.endsWith('.') ? fmt : fmt + '.');
+  if (con) parts.push(con.endsWith('.') ? con : con + '.');
+  return parts.join(' ');
+}
+
+function update() {
+  const assembled = assemble();
+  const filled = Object.values(fields).filter(f => f.value.trim().length > 0).length;
+
+  // Preview
+  if (assembled) {
+    preview.textContent = assembled;
+    preview.classList.remove('empty');
+  } else {
+    preview.textContent = 'Start typing to build your prompt...';
+    preview.classList.add('empty');
+  }
+
+  // Completeness
+  const pct = (filled / 4) * 100;
+  cBar.style.width = pct + '%';
+  const colors = ['#888', '#ef4444', '#f0a500', '#f0a500', '#6366f1'];
+  cBar.style.background = colors[filled];
+
+  checks.forEach(c => {
+    const fId = c.dataset.field;
+    const done = fields[fId].value.trim().length > 0;
+    c.classList.toggle('done', done);
+    c.querySelector('.check-icon').innerHTML = done ? '&#10003;' : '&#9675;';
+  });
+
+  const msgs = [
+    'Start by telling the AI who you are',
+    'Getting better \u2014 add the remaining parts for stronger results',
+    'Getting better \u2014 add the remaining parts for stronger results',
+    'Almost there \u2014 adding the last part will make this much sharper',
+    'This prompt has everything the AI needs. Ready to use.'
+  ];
+  cMsg.textContent = msgs[filled];
+
+  // Before/After
+  baGood.textContent = assembled ? '\u2713 ' + assembled : '\u2713 Your assembled prompt will appear here';
+  if (filled === 4) { baGood.classList.add('pulse'); setTimeout(() => baGood.classList.remove('pulse'), 1000); }
+
+  // Copy button
+  copyBtn.disabled = !assembled;
+  copyBtn.textContent = 'Copy prompt';
+  copyBtn.classList.remove('copied');
+
+  // Insights
+  if (filled === 1 && !insightShown.first) {
+    insightShown.first = true;
+    showInsight('Even adding just your role changes the output dramatically. Context shapes everything.');
+  }
+  if (filled === 4 && !insightShown.complete) {
+    insightShown.complete = true;
+    showInsight('This took about 30 seconds longer than a vague prompt. It will save you several minutes of editing the output.');
+  }
+}
+
+function showInsight(text) {
+  insightText.textContent = text;
+  insightEl.classList.remove('visible');
+  void insightEl.offsetWidth;
+  insightEl.classList.add('visible');
+}
+
+// Events
+Object.values(fields).forEach(f => f.addEventListener('input', update));
+
+copyBtn.addEventListener('click', () => {
+  const text = assemble();
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(() => {
+    copyBtn.textContent = 'Copied!';
+    copyBtn.classList.add('copied');
+    setTimeout(() => { copyBtn.textContent = 'Copy prompt'; copyBtn.classList.remove('copied'); }, 2000);
+  });
+});
+
+explainer.addEventListener('click', () => {
+  explainer.classList.toggle('collapsed');
+  explainer.setAttribute('aria-expanded', !explainer.classList.contains('collapsed'));
+});
+
+// Dropdown
+EXAMPLES.forEach(ex => {
+  const item = document.createElement('div');
+  item.className = 'dropdown-item';
+  item.textContent = ex.name;
+  item.setAttribute('role', 'menuitem');
+  item.tabIndex = 0;
+  item.addEventListener('click', () => {
+    // Typewriter fill
+    closeDropdown();
+    const pairs = [['fContext', ex.context], ['fTask', ex.task], ['fFormat', ex.format], ['fConstraints', ex.constraints]];
+    let delay = 0;
+    pairs.forEach(([id, text]) => {
+      const el = fields[id];
+      el.value = '';
+      for (let i = 0; i < text.length; i++) {
+        setTimeout(() => { el.value = text.slice(0, i + 1); update(); }, delay + i * 20);
+      }
+      delay += text.length * 20 + 100;
+    });
+  });
+  dropdownMenu.appendChild(item);
+});
+
+dropdownBtn.addEventListener('click', (e) => { e.stopPropagation(); dropdownMenu.classList.toggle('open'); });
+document.addEventListener('click', closeDropdown);
+function closeDropdown() { dropdownMenu.classList.remove('open'); }
+
+resetBtn.addEventListener('click', () => {
+  Object.values(fields).forEach(f => f.value = '');
+  insightShown = { first: false, complete: false };
+  insightEl.classList.remove('visible');
+  update();
+});
+
+update();
+</script>
+</body>
+</html>

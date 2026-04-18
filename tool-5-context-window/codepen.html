@@ -1,0 +1,42 @@
+<div class="container">
+  <div class="header"><h1>Context Window Demo</h1></div>
+  <div class="header-line"></div>
+
+  <div class="card explainer" id="explainer" tabindex="0" role="button" aria-expanded="true">
+    <div class="explainer-toggle"><span>How this works</span><span class="chevron">&#9660;</span></div>
+    <div class="explainer-text">AI can only "see" a limited amount of text at once — its context window. When the window is full, the earliest information fades away. This is why long conversations lose context.</div>
+  </div>
+
+  <div class="model-row">
+    <label>Model:</label>
+    <select class="model-select" id="modelSelect">
+      <option value="10">Small model (4K tokens)</option>
+      <option value="16">GPT-4o (128K tokens)</option>
+      <option value="20" selected>Claude (200K tokens)</option>
+    </select>
+    <span class="model-info">Window: <strong id="windowSize">20</strong> tokens</span>
+  </div>
+  <div class="scale-note">(Scaled down to demonstrate — real windows are thousands of times larger)</div>
+
+  <div class="card">
+    <div class="chat-area" id="chatArea"></div>
+  </div>
+
+  <div class="card usage-card">
+    <div class="section-label">Window usage</div>
+    <div class="usage-bar"><div class="usage-lost" id="usageLost" style="width:0%"></div><div class="usage-visible" id="usageVisible" style="width:0%"></div><div class="usage-free"></div></div>
+    <div class="usage-labels"><span id="usageText">0 / 20 tokens</span><span id="usageFree">20 free</span></div>
+    <div class="usage-legend">
+      <span><span class="legend-dot" style="background:rgba(239,68,68,.6)"></span>Lost</span>
+      <span><span class="legend-dot" style="background:var(--accent)"></span>Visible to AI</span>
+      <span><span class="legend-dot" style="background:rgba(255,255,255,.1)"></span>Free</span>
+    </div>
+  </div>
+
+  <div class="insight" id="insight" role="status" aria-live="polite"><span>&#128161; </span><span id="insightText"></span></div>
+
+  <div class="controls">
+    <button class="btn primary" id="autoBtn">Auto-play conversation &#9654;</button>
+    <button class="reset-btn" id="resetBtn">Reset &#8634;</button>
+  </div>
+</div>
