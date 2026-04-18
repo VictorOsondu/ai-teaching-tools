@@ -6,11 +6,11 @@ Interactive browser-based tools that explain core AI concepts to non-technical p
 
 | # | Tool | What it teaches |
 |---|------|-----------------|
-| 1 | **Next-Word Prediction Simulator** | How LLMs generate text by predicting the most probable next word, one word at a time |
-| 2 | **Token Visualiser** | How AI splits text into tokens — and why that affects cost, speed, and context limits |
-| 3 | **Prompt Structure Builder** | How to write effective prompts using a 4-part framework: Context, Task, Format, Constraints |
-| 4 | **Temperature Slider** | How the temperature setting controls randomness — from deterministic to creative |
-| 5 | **Context Window Demo** | Why AI "forgets" things in long conversations — and what to do about it |
+| 1 | **[Next-Word Prediction Simulator](https://codepen.io/editor/VictorOsondu/pen/019d9ab6-517a-77e8-9436-0800c8d84ea5)** | How LLMs generate text by predicting the most probable next word, one word at a time |
+| 2 | **[Token Visualiser](https://codepen.io/editor/VictorOsondu/pen/019da17e-5c9b-7f5a-bd09-dde098be9078)** | How AI splits text into tokens — and why that affects cost, speed, and context limits |
+| 3 | **[Prompt Structure Builder](https://codepen.io/editor/VictorOsondu/pen/019da1da-db0b-7c34-8158-79167998e6ae)** | How to write effective prompts using a 4-part framework: Context, Task, Format, Constraints |
+| 4 | **[Temperature Slider](https://codepen.io/editor/VictorOsondu/pen/019da1dc-a109-7a05-83e4-8656c721f070)** | How the temperature setting controls randomness — from deterministic to creative |
+| 5 | **[Context Window Demo](https://codepen.io/editor/VictorOsondu/pen/019da1de-9eb7-75c0-afe3-f9abaf29b5fa)** | Why AI "forgets" things in long conversations — and what to do about it |
 
 ## How they connect
 
